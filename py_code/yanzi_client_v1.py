@@ -5,18 +5,14 @@
 """
 
 import csv
-from datetime import datetime
-from datetime import timedelta
 import json
-import pprint
+from pprint import pprint
 import ssl
 import sys
 import time
-
+from datetime import datetime, timedelta
+from collections import deque
 import websocket
-
-# import numpy as np
-# import time
 
 # The cirrus host to connect to:
 cirrusHost = "cirrus20.yanzi.se"
@@ -24,26 +20,34 @@ cirrusHost = "cirrus20.yanzi.se"
 # Change the username and password to the Yanzi credentials:
 username = 'frank.shen@pinyuaninfo.com'
 password = 'Ft@Sugarcube99'
-# locationID = "879448"  #snf
+
+# locationID = "879448"  # snf
 # locationID = "655623"
+# locationID = "74365"  # kerry
+
 locationID = "229349"  # ft
 # locationID = "797296"  # no
-pattern = '%Y-%m-%d %H:%M:%S'
+
 startstr = '2020-10-01 00:00:00'
 endstr = '2020-10-31 23:59:59'
+datatype = 'UUID'  # Motion | UUID | TEMP ...
+splitDays = 20 if datatype == 'UUID' else 1
+
+pattern = '%Y-%m-%d %H:%M:%S'
 startdt = datetime.fromtimestamp((time.mktime(time.strptime(startstr, pattern))))
 enddt = datetime.fromtimestamp((time.mktime(time.strptime(endstr, pattern))))
-
-# HBFlag = 0
 datalists = []
 csvlist = []
 requestcount = 0
 HBFlag = 0
+msgQue = deque()
+count = 0
 
 
 def onMessage(ws, message):
     # eventtime = datetime.datetime.now()
     response = json.loads(message)
+    sendFromQue()
     # print('response')
     global requestcount, HBFlag
     # HBFlag = 0
@@ -54,12 +58,9 @@ def onMessage(ws, message):
         sendLoginRequest()
     elif response["messageType"] == "LoginResponse":
         if (response['responseCode']['name'] == 'success'):
-            # print("onMessage: Got LoginResponse, sending get samples request")
-            # We successfully logged in, let’s get the samples for the sensor unit
-            # sendSubscribeRequest(locationID, datatype=['occupancy'])
-            # sendPeriodicRequest()
             sendGetUnitsRequest(locationID)
-
+        else:
+            sys.exit(-1)
     elif response["messageType"] == "PeriodicResponse":
         HBFlag = 0
         print(HBFlag, '# ', "periodic response-keepalive")
@@ -70,7 +71,7 @@ def onMessage(ws, message):
     elif response["messageType"] == "GetUnitsResponse":
         # print(response)
         unitslist = response['list']
-        # pprint.pprint(unitslist)
+        # pprint(unitslist)
         for unit in unitslist:
             # print(unit['unitAddress']['did'],unit['unitTypeFixed']['name'])
             if 'Motion' in unit['unitAddress']['did']:
@@ -79,7 +80,7 @@ def onMessage(ws, message):
                 # sendGetSamplesRequest(
                 #     unit['unitAddress']['did'], locationID, start, end)
             elif 'UUID' in unit['unitAddress']['did']:
-                # pprint.pprint(unit)
+                # pprint(unit)
                 # print('Asset')
 
                 sendGetSamplesRequest(unit['unitAddress']['did'], locationID, startdt, enddt)
@@ -89,23 +90,18 @@ def onMessage(ws, message):
     elif response["messageType"] == "GetSamplesResponse":
         # global requestcount
         requestcount = requestcount - 1
-        print('request pending:', requestcount)
-        # pprint.pprint(response)
+        # print(' ', requestcount, end='..')
+        # pprint(response)
         # print('list' in response['sampleListDto'])
         """处理了返回列表中list不存在的情况,这是因为时间段内没有事件
         """
         if (response['responseCode']['name'] == 'success') and ('list' in response['sampleListDto']):  # response['responseCode']['name']
-            pprint.pprint(response)
-
             datalists = response['sampleListDto']['list']
+            global count
+            count += len(datalists)
+            print(count, 'lists', end='...')
             for li in datalists:
-                # print(eventtime)
-                # print(int(li['sampleTime']))
-                # print(int(li['sampleTime'] / 1000))
-                # print(eventtime)
                 eventtime = datetime.fromtimestamp(int(li['sampleTime']/1000)).strftime(pattern)
-                # print(eventtime)
-
                 if li['resourceType'] == "SampleAsset":
                     # print(response['sampleListDto']['dataSourceAddress']['did'],
                     #       li['assetState']['name'], eventtime)
@@ -113,10 +109,12 @@ def onMessage(ws, message):
                 elif li['resourceType'] == 'SampleMotion':
                     print(response['sampleListDto']['dataSourceAddress']['did'], eventtime, li['value'])
         else:
-            print('skiped')
+            # print('skiped')
+            pass
         if requestcount == 0:
             writetofile()
-            sys.exit()
+            print(datetime.now(), ' Mission Accomplished')
+            sys.exit(0)
     else:
         print(response)
 
@@ -128,8 +126,8 @@ def writetofile():
         f.close()
 
 
-def onError(ws, error):
-    print("closed", error)
+# def onError(ws, error):
+#     print("Error", error)
 
 
 def onClose(ws):
@@ -141,19 +139,33 @@ def onOpen(ws):
     sendServiceRequest()
 
 
-def sendMessage(message):
+def sendFromQue():
+    global msgQue
     if not ws.sock.connected:
         print("sendMessage: Could not send cirrus message, socket not open")
     else:
-        message['timeSent'] = int(time.time() * 1000)
-        msg = json.dumps(message)
-        ws.send(msg)
-        # print('sending message')
+        if len(msgQue) != 0:
+            ws.send(msgQue.pop())
+
+
+# append message in global que
+
+def sendMessagetoQue(message):
+    global msgQue
+    message['timeSent'] = int(time.time() * 1000)
+    msg = json.dumps(message)
+    msgQue.append(msg)
+    # print('sending message')
+    if not ws.sock.connected:
+        print("sendMessage: Could not send cirrus message, socket not open")
+    else:
+        if len(msgQue) < 5:  # !! window size
+            ws.send(msgQue.pop())
 
 
 def sendServiceRequest():
     request = {"messageType": "ServiceRequest", "version": "1.6.4", "clientId": "123456"}
-    sendMessage(request)
+    sendMessagetoQue(request)
 
 
 def sendSubscribeRequest(location_id, datatype):
@@ -170,7 +182,7 @@ def sendSubscribeRequest(location_id, datatype):
                 "name": type  #
             }
         }
-        sendMessage(request)
+        sendMessagetoQue(request)
         # print('      ', request)
 
 
@@ -183,28 +195,23 @@ def sendPeriodicRequest():
         print(' ---  periodic request send ' + HBFlag)
         HBFlag += 1
 
-    sendMessage(request)
+    sendMessagetoQue(request)
 
 
 def sendGetUnitsRequest(locationID):
     request = {"messageType": 'GetUnitsRequest', "timeSent": int(time.time() * 1000), "locationAddress": {"resourceType": 'LocationAddress', "locationId": locationID}}
     print('sending getunits request for ' + locationID)
-    sendMessage(request)
+    sendMessagetoQue(request)
 
 
 def sendLoginRequest():
     request = {"messageType": "LoginRequest", "username": username, "password": password}
-    sendMessage(request)
+    sendMessagetoQue(request)
 
 
 def sendGetSamplesRequest(UnitDid, LocationId, start, end):
-    # Create sample request to request the last 24 hour samples
-    # print('start', UnitDid, LocationId, start, end)
-    # print(end - start)
-    # print(timedelta(days=1))
-
-    if (end - start) <= timedelta(days=1):
-        # print('1')
+    print('    ---', start, end, '  ')
+    if (end - start) <= timedelta(days=splitDays):  # !!为了保证返回的记录数不大于2000,限制时段的天数
         request = {
             "messageType": "GetSamplesRequest",
             "dataSourceAddress": {
@@ -221,23 +228,24 @@ def sendGetSamplesRequest(UnitDid, LocationId, start, end):
                 # "timeEnd" : int((time.time() - (0 * 3600)) * 1000)
             }
         }
-        # pprint.pprint(request)
+        # print(request["timeSerieSelection"]['timeStart'])
         global requestcount
         requestcount += 1
         print('request just sent:', requestcount)  # 增加请求计数器
-        # pprint.pprint(request)
-        sendMessage(request)
+        # pprint(request)
+        sendMessagetoQue(request)
     else:
         # print('2')
         # time_stamp = int(time.mktime(time.strptime(start, pattern) + 24 * 3600*1000))
         # startday = datetime.fromtimestamp(time.mktime(time.strptime(start, pattern)))
-        start_time_plus_1D = start.replace(day=start.day + 1)
-        sendGetSamplesRequest(UnitDid, LocationId, start, start_time_plus_1D)
-        sendGetSamplesRequest(UnitDid, LocationId, start_time_plus_1D, end)
+        start_time_plus_splitDays = start+timedelta(days=splitDays)
+        # start_time_plus_1D = start+datetime.timedelta(days=20)
+        sendGetSamplesRequest(UnitDid, LocationId, start, start_time_plus_splitDays)
+        sendGetSamplesRequest(UnitDid, LocationId, start_time_plus_splitDays, end)
 
 
 if __name__ == "__main__":
-    print("Connecting to ", cirrusHost, "with user ", username)
-    ws = websocket.WebSocketApp("wss://" + cirrusHost + "/cirrusAPI", on_message=onMessage, on_error=onError, on_close=onClose, on_open=onOpen, keep_running=True)
+    print(datetime.now(), " Connecting to ", cirrusHost, "with user ", username)
+    ws = websocket.WebSocketApp("wss://" + cirrusHost + "/cirrusAPI", on_message=onMessage, on_close=onClose, on_open=onOpen, keep_running=True)
 
     ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
