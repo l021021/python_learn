@@ -18,7 +18,6 @@ import websocket
 # import numpy as np
 # import time
 
-
 # The cirrus host to connect to:
 cirrusHost = "cirrus20.yanzi.se"
 
@@ -37,17 +36,10 @@ datalists = []
 csvlist = []
 requestcount = 0
 
-print(141414
-wh=1212
-
-
-
-
-
 
 def onMessage(ws, message):
     # eventtime = datetime.datetime.now()
-    response=json.loads(message)
+    response = json.loads(message)
     # HBFlag = 0
     print('response')
     global requestcount
@@ -70,7 +62,7 @@ def onMessage(ws, message):
         # print("onMessage: Got SubscribeData")
     elif response["messageType"] == "GetUnitsResponse":
         # print(response)
-        unitslist=response['list']
+        unitslist = response['list']
         for unit in unitslist:
             # print(unit['unitAddress']['did'],unit['unitTypeFixed']['name'])
             if 'Motion' in unit['unitAddress']['did']:
@@ -80,30 +72,27 @@ def onMessage(ws, message):
             elif 'UUID' in unit['unitAddress']['did']:
                 print('Asset')
 
-                sendGetSamplesRequest(
-                    unit['unitAddress']['did'], locationID, startdt, enddt)
+                sendGetSamplesRequest(unit['unitAddress']['did'], locationID, startdt, enddt)
                 # requestcount += 1
                 # print('request sent:', requestcount)  # 增加请求计数器
 
     elif response["messageType"] == "GetSamplesResponse":
         # global requestcount
-        requestcount=requestcount - 1
+        requestcount = requestcount - 1
         print('request pending:', requestcount)
         # pprint.pprint(response)
         if response['responseCode']['name'] == "success":
             # pprint.pprint(response)
-            datalists=response['sampleListDto']['list']
+            datalists = response['sampleListDto']['list']
             for li in datalists:
                 # print(eventtime)
                 # print(int(li['sampleTime']))
-                eventtime=datetime.datetime.fromtimestamp(
-                    int(li['sampleTime'])/1000).strftime(pattern)
+                eventtime = datetime.datetime.fromtimestamp(int(li['sampleTime']) / 1000).strftime(pattern)
                 # print(eventtime)
                 if li['resourceType'] == "SampleAsset":
                     # print(response['sampleListDto']['dataSourceAddress']['did'],
                     #       li['assetState']['name'], eventtime)
-                    csvlist.append([response['sampleListDto']['dataSourceAddress']['did'],
-                                    li['assetState']['name'], eventtime])
+                    csvlist.append([response['sampleListDto']['dataSourceAddress']['did'], li['assetState']['name'], eventtime])
                 elif li['resourceType'] == 'SampleMotion':
                     print(response['sampleListDto']['dataSourceAddress']['did'], eventtime, li['value'])
         if requestcount == 0:
@@ -115,7 +104,7 @@ def onMessage(ws, message):
 
 def writetofile():  # ?
     with open(r"f:\data.csv", 'w', encoding='utf-8', newline='') as f:
-        writer=csv.writer(f)
+        writer = csv.writer(f)
         writer.writerows(csvlist)
         f.close()
 
@@ -137,24 +126,20 @@ def sendMessage(message):
     if not ws.sock.connected:
         print("sendMessage: Could not send cirrus message, socket not open")
     else:
-        message['timeSent']=int(time.time() * 1000)
-        msg=json.dumps(message)
+        message['timeSent'] = int(time.time() * 1000)
+        msg = json.dumps(message)
         ws.send(msg)
         print('sending message')
 
 
 def sendServiceRequest():
-    request={
-        "messageType": "ServiceRequest",
-        "version": "1.6.4",
-        "clientId": "123456"
-    }
+    request = {"messageType": "ServiceRequest", "version": "1.6.4", "clientId": "123456"}
     sendMessage(request)
 
 
 def sendSubscribeRequest(location_id, datatype):
     for type in datatype:
-        request={
+        request = {
             "messageType": "SubscribeRequest",
             "timeSent": int(time.time() * 1000),
             "unitAddress": {
@@ -171,10 +156,7 @@ def sendSubscribeRequest(location_id, datatype):
 
 
 def sendPeriodicRequest():  # ？
-    request={
-        "messageType": "PeriodicRequest",
-        "timeSent": int(time.time() * 1000)
-    }
+    request = {"messageType": "PeriodicRequest", "timeSent": int(time.time() * 1000)}
     # if HBFlag == 3:
     #     print('    periodic request missed (%s), will reconnect',
     #           HBFlag)
@@ -186,39 +168,28 @@ def sendPeriodicRequest():  # ？
 
 
 def sendGetUnitsRequest(locationID):
-    request={
-        "messageType": 'GetUnitsRequest',
-        "timeSent": int(time.time() * 1000),
-        "locationAddress": {
-            "resourceType": 'LocationAddress',
-            "locationId": locationID
-        }
-    }
+    request = {"messageType": 'GetUnitsRequest', "timeSent": int(time.time() * 1000), "locationAddress": {"resourceType": 'LocationAddress', "locationId": locationID}}
     print('sending getunits request for ' + locationID)
     sendMessage(request)
 
 
 def sendLoginRequest():
-    request={
-        "messageType": "LoginRequest",
-        "username": username,
-        "password": password
-    }
+    request = {"messageType": "LoginRequest", "username": username, "password": password}
     sendMessage(request)
 
 
 def sendGetSamplesRequest(UnitDid, LocationId, start, end):
     # Create sample request to request the last 24 hour samples
     print('start', UnitDid, LocationId, start, end)
-    print(end-start)
+    print(end - start)
     print(timedelta(days=1))
 
-    if (end-start) <= timedelta(days=1):
+    if (end - start) <= timedelta(days=1):
         print('1')
         # print(start.timestamp() * 1000)
         # print(int((time.mktime(end) * 1000)))
 
-        request={
+        request = {
             "messageType": "GetSamplesRequest",
             "dataSourceAddress": {
                 "resourceType": "DataSourceAddress",
@@ -244,18 +215,13 @@ def sendGetSamplesRequest(UnitDid, LocationId, start, end):
         print('2')
         # time_stamp = int(time.mktime(time.strptime(start, pattern) + 24 * 3600*1000))
         # startday = datetime.fromtimestamp(time.mktime(time.strptime(start, pattern)))
-        start_time_plus_1D=start.replace(day=start.day+1)
+        start_time_plus_1D = start.replace(day=start.day + 1)
         sendGetSamplesRequest(UnitDid, LocationId, start, start_time_plus_1D)
-        sendGetSamplesRequest(UnitDid, LocationId,  start_time_plus_1D, end)
+        sendGetSamplesRequest(UnitDid, LocationId, start_time_plus_1D, end)
 
 
 if __name__ == "__main__":
     print("Connecting to ", cirrusHost, "with user ", username)
-    ws=websocket.WebSocketApp("wss://" + cirrusHost + "/cirrusAPI",
-                                on_message=onMessage,
-                                on_error=onError,
-                                on_close=onClose,
-                                on_open=onOpen,
-                                keep_running=True)
+    ws = websocket.WebSocketApp("wss://" + cirrusHost + "/cirrusAPI", on_message=onMessage, on_error=onError, on_close=onClose, on_open=onOpen, keep_running=True)
 
     ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
