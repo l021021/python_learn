@@ -35,7 +35,7 @@ password = 'Ft@Sugarcube99'
 locationID = "229349"  # ft
 # locationID = "797296"  # no
 
-startstr = '2020-10-21 00:00:00'
+startstr = '2020-05-01 00:00:00'
 endstr = '2020-10-31 23:59:59'
 datatype = 'UUID'  # Motion | UUID | TEMP ...
 splitDays = 20 if datatype == 'UUID' else 1
@@ -50,7 +50,6 @@ requestcount = 0
 HBFlag = 0
 msgQue = deque()
 count = 0
-# s = sched.scheduler(time.time, time.sleep)
 
 
 def writetofile():
@@ -64,11 +63,13 @@ def sendPeriodicRequest():
     global HBFlag
     request = {"messageType": "PeriodicRequest",
                "timeSent": int(time.time() * 1000)}
-    if HBFlag == 3:
-        print('--- periodic request missed:', HBFlag)
+    HBFlag += 1
+    if HBFlag >= 3:
+        print('(', HBFlag, 'periodic request sent )')
+        print('Should disconnect ')  # !!
+
     else:
-        HBFlag += 1
-        print('--- periodic request sent:', HBFlag)
+        print('(', HBFlag, 'periodic request missed )')
     sendMessage(request)
 
 
@@ -92,14 +93,13 @@ def onMessage(ws, message):
         if (response['responseCode']['name'] == 'success'):
             # s.enterabs(1, 1, sendPeriodicRequest())  # !!开启定时器
             # rt = RepeatedTimer(30, sendPeriodicRequest)
-            sendPeriodicRequest()
-
             sendGetUnitsRequest(locationID)
+            sendPeriodicRequest()
         else:
             sys.exit(-1)
     elif response["messageType"] == "PeriodicResponse":
         HBFlag = 0
-        print(HBFlag, ':', "periodic response-keepalive pending")
+        print("( periodic response rcvd )")
         rt.start()
 
     elif response["messageType"] == "SubscribeData":
@@ -110,52 +110,34 @@ def onMessage(ws, message):
         unitslist = response['list']
         # pprint(unitslist)
         for unit in unitslist:
-            # print(unit['unitAddress']['did'],unit['unitTypeFixed']['name'])
-            if 'Motion' in unit['unitAddress']['did']:
-                pass
-                # print('Motion')
-                # sendGetSamplesRequest(
-                #     unit['unitAddress']['did'], locationID, start, end)
-            elif 'UUID' in unit['unitAddress']['did']:
-                # pprint(unit)
-                # print('Asset')
-
+            if 'UUID' in unit['unitAddress']['did']:
                 sendGetSamplesRequest(
                     unit['unitAddress']['did'], locationID, startdt, enddt)
-                # requestcount += 1
-                # print('request sent:', requestcount)  # 增加请求计数器
+            # if 'Motion' in unit['unitAddress']['did']:
+                # pass
 
     elif response["messageType"] == "GetSamplesResponse":
-        # global requestcount
         requestcount = requestcount - 1
-        # print(' ', requestcount, end='..')
-        # pprint(response)
-        # print('list' in response['sampleListDto'])
         """处理了返回列表中list不存在的情况,这是因为时间段内没有事件
         """
         if (response['responseCode']['name'] == 'success') and ('list' in response['sampleListDto']):  # response['responseCode']['name']
             datalists = response['sampleListDto']['list']
             global count
             count += len(datalists)
-            print(count,  end='...')
+            print(count,  end='>')
             for li in datalists:
                 eventtime = datetime.fromtimestamp(
                     int(li['sampleTime']/1000)).strftime(pattern)
                 if li['resourceType'] == "SampleAsset":
-                    # print(response['sampleListDto']['dataSourceAddress']['did'],
-                    #       li['assetState']['name'], eventtime)
                     csvlist.append([response['sampleListDto']['dataSourceAddress']
                                     ['did'], li['assetState']['name'], eventtime])
                 elif li['resourceType'] == 'SampleMotion':
                     print(response['sampleListDto']['dataSourceAddress']
                           ['did'], eventtime, li['value'])
-        else:
-            # print('skiped')
-            pass
         if requestcount == 0:
+            print('\n', datetime.now(), ' Mission Accomplished')
             writetofile()
             rt.stop()
-            print('\n', datetime.now(), ' Mission Accomplished')
             sys.exit(0)
     else:
         print(response)
@@ -166,7 +148,7 @@ def onMessage(ws, message):
 
 
 def onClose(ws):
-    print("onClose")
+    print("\n----Connection to Cloud closed----\n")
 
 
 def onOpen(ws):
@@ -177,11 +159,8 @@ def onOpen(ws):
 
 def sendFromQue():
     global msgQue
-    if not ws.sock.connected:
-        print("sendMessage: Could not send cirrus message, socket not open")
-    else:
-        if len(msgQue) != 0:
-            ws.send(msgQue.pop())
+    if len(msgQue) != 0:
+        ws.send(msgQue.pop())
 
 
 def sendMessage(message):
@@ -271,7 +250,7 @@ def sendGetSamplesRequest(UnitDid, LocationId, start, end):
         # print(request["timeSerieSelection"]['timeStart'])
         global requestcount
         requestcount += 1
-        print(requestcount, end='_')  # 增加请求计数器
+        print(requestcount, end='.')  # 增加请求计数器
         # pprint(request)
         sendMessagetoQue(request)
     else:
