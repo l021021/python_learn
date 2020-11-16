@@ -72,7 +72,11 @@ def sendPeriodicRequest():
     sendMessage(request)
 
 
+rt = RepeatedTimer(30, sendPeriodicRequest)
+
+
 def onMessage(ws, message):
+    global rt
     # eventtime = datetime.datetime.now()
     response = json.loads(message)
     sendFromQue()
@@ -96,7 +100,7 @@ def onMessage(ws, message):
     elif response["messageType"] == "PeriodicResponse":
         HBFlag = 0
         print(HBFlag, ':', "periodic response-keepalive pending")
-        rt = RepeatedTimer(5, sendPeriodicRequest)
+        rt.start()
 
     elif response["messageType"] == "SubscribeData":
         print('  Subscription     :', response)
@@ -150,6 +154,7 @@ def onMessage(ws, message):
             pass
         if requestcount == 0:
             writetofile()
+            rt.stop()
             print('\n', datetime.now(), ' Mission Accomplished')
             sys.exit(0)
     else:
