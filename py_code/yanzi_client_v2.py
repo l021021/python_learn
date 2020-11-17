@@ -33,10 +33,11 @@ password = 'Ft@Sugarcube99'
 # locationID = "74365"  # kerry
 
 locationID = "229349"  # ft
+locationID = "521209"  # wf
 # locationID = "797296"  # no
 
-startstr = '2020-05-01 00:00:00'
-endstr = '2020-10-31 23:59:59'
+startstr = '2020-11-06 09:00:00'
+endstr = '2020-11-06 18:59:59'
 datatype = 'UUID'  # Motion | UUID | TEMP ...
 splitDays = 20 if datatype == 'UUID' else 1
 
@@ -55,6 +56,7 @@ count = 0
 def writetofile():
     with open(r"C:\\LOG\\data.csv", 'w', encoding='utf-8', newline='') as f:  # ! 注意修改文件名
         writer = csv.writer(f)
+        writer.writerow(['ID', 'EVENT', 'TIME'])
         writer.writerows(csvlist)
         f.close()
 
