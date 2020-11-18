@@ -4,15 +4,16 @@ import datetime
 import matplotlib as plt
 
 # 导入数据
-data = pd.read_csv('c:\\LOG\\wf-2020110609-19.csv', parse_dates=[2])
+filename = "c:\\LOG\\5212092020-11-09-00-00-002020-11-14-00-00-00.csv"
+data = pd.read_csv(filename, parse_dates=[2])
 data['flag'] = ''
 
 print('records:', len(data))
 
 # 建立时间轴
 # 根据数据生成目标时间格子
-min = datetime.datetime(2020, 11, 6, 9, 0, 0)
-max = datetime.datetime(2020, 11, 6, 19, 0, 0)
+min = datetime.datetime(2020, 11, 9, 0, 0, 0)
+max = datetime.datetime(2020, 11, 14, 0, 0, 0)
 # Gridlist = pd.date_range(min.replace(microsecond=0, second=0, minute=min.minute//5*5), max+pd.DateOffset(minutes=5), freq='5T')
 Gridlist = pd.date_range(min, max, freq='5T')
 

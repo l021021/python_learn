@@ -36,15 +36,17 @@ password = 'Ft@Sugarcube99'
 locationID = "521209"  # wf
 # locationID = "797296"  # no
 
-startstr = '2020-11-06 09:00:00'
-endstr = '2020-11-06 18:59:59'
+startstr = '2020-11-09-00-00-00'
+endstr = '2020-11-14-00-00-00'
 datatype = 'UUID'  # Motion | UUID | TEMP ...
 splitDays = 20 if datatype == 'UUID' else 1
 
-pattern = '%Y-%m-%d %H:%M:%S'
+patternr = '%Y-%m-%d-%H-%M-%S'
+patternw = '%Y-%m-%d %H:%M:%S'
+
 startdt = datetime.fromtimestamp(
-    (time.mktime(time.strptime(startstr, pattern))))
-enddt = datetime.fromtimestamp((time.mktime(time.strptime(endstr, pattern))))
+    (time.mktime(time.strptime(startstr, patternr))))
+enddt = datetime.fromtimestamp((time.mktime(time.strptime(endstr, patternr))))
 datalists = []
 csvlist = []
 requestcount = 0
@@ -54,7 +56,8 @@ count = 0
 
 
 def writetofile():
-    with open(r"C:\\LOG\\data.csv", 'w', encoding='utf-8', newline='') as f:  # ! 注意修改文件名
+    filename = "C:\\LOG\\"+locationID+startstr+endstr+".csv"
+    with open(filename, 'w', encoding='utf-8', newline='') as f:  # ! 注意修改文件名
         writer = csv.writer(f)
         writer.writerow(['ID', 'EVENT', 'TIME'])
         writer.writerows(csvlist)
@@ -129,7 +132,7 @@ def onMessage(ws, message):
             print(count,  end='>')
             for li in datalists:
                 eventtime = datetime.fromtimestamp(
-                    int(li['sampleTime']/1000)).strftime(pattern)
+                    int(li['sampleTime']/1000)).strftime(patternw)
                 if li['resourceType'] == "SampleAsset":
                     csvlist.append([response['sampleListDto']['dataSourceAddress']
                                     ['did'], li['assetState']['name'], eventtime])
