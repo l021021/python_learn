@@ -32,7 +32,7 @@ password = 'Ft@Sugarcube99'
 # locationID = "655623"
 # locationID = "74365"  # kerry
 
-locationID = "229349"  # ft
+# locationID = "229349"  # ft
 locationID = "521209"  # wf
 # locationID = "797296"  # no
 
