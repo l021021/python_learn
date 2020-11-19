@@ -4,7 +4,7 @@ import datetime
 import matplotlib as plt
 
 # 导入数据
-filename = "c:\\LOG\\5212092020-11-09-00-00-002020-11-14-00-00-00.csv"
+filename = "c:\\LOG\\8794482020-11-18-12-00-002020-11-18-22-00-00.csv"  # !! 修改!!!!
 data = pd.read_csv(filename, parse_dates=[2])
 data['flag'] = ''
 
@@ -12,8 +12,8 @@ print('records:', len(data))
 
 # 建立时间轴
 # 根据数据生成目标时间格子
-min = datetime.datetime(2020, 11, 9, 0, 0, 0)
-max = datetime.datetime(2020, 11, 14, 0, 0, 0)
+min = datetime.datetime(2020, 11, 18, 12, 0, 0)  # !! 修改!!!!
+max = datetime.datetime(2020, 11, 18, 22, 0, 0)  # !! 修改!!!!
 # Gridlist = pd.date_range(min.replace(microsecond=0, second=0, minute=min.minute//5*5), max+pd.DateOffset(minutes=5), freq='5T')
 Gridlist = pd.date_range(min, max, freq='5T')
 
@@ -79,18 +79,18 @@ for id in IDSet:
         stamp = biglist.iloc[i, 2]  # 事件时间戳
 
         if pd.isna(event):            # !!说明这是一个插入的格子时间.没有事件,延续当前状态
-            print('Not event', end='..')
+            # print('Not event', end='..')
             post = stamp
             if flag == 'free':  #
                 #                 Gridresult.at[post,'occ']= 0.0000 #写入后一个格子
                 if pd.isna(Gridresult.at[post, 'occ']):
                     Gridresult.at[post, 'occ'] = 0.0
-                    print('    continue 0 ', post, Gridresult.at[post, 'occ'])
+                    # print('    continue 0 ', post, Gridresult.at[post, 'occ'])
 
             elif flag == 'occupied':
                 if pd.isna(Gridresult.at[post, 'occ']):
                     Gridresult.at[post, 'occ'] = 1.0
-                    print('    continue 1 ', post, Gridresult.at[post, 'occ'])
+                    # print('    continue 1 ', post, Gridresult.at[post, 'occ'])
 
         else:   # !!说明这是一个事件
             print(stamp, event, end='..')
@@ -118,12 +118,15 @@ for id in IDSet:
             print(' -- was', post, Gridresult.at[post, 'occ'], offset)
             Gridresult.at[post, 'occ'] = float(offset+Gridresult.at[post, 'occ']) if (Gridresult.at[post, 'occ']+offset) > 0 else 0.0000
             print(' -- now recorded', post, Gridresult.at[post, 'occ'])
-            Gridresult['ID'] = id
 
     # print(Gridresult.info())
-    Gridresult = Gridresult[Gridresult.occ >= 0]
-    Gridresult.plot()
+    # Gridresult = Gridresult[Gridresult.occ >= 0]
+    # Gridresult.plot()
+    # Grid30 = Gridresult.resample('30T', axis=0).mean()
+    Grid30 = Gridresult
 
-    Gridresult.to_csv("c:\\LOG\\result.csv", mode='a+')
+    Grid30['ID'] = id
+    Grid30.to_csv(filename+"result", mode='a+')
+
 
 # Gridresult

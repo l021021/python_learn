@@ -33,11 +33,13 @@ password = 'Ft@Sugarcube99'
 # locationID = "74365"  # kerry
 
 # locationID = "229349"  # ft
-locationID = "521209"  # wf
-# locationID = "797296"  # no
+# locationID = "521209"  # wf
+locationID = "879448"  # no
 
-startstr = '2020-11-09-00-00-00'
-endstr = '2020-11-14-00-00-00'
+startstr = '2020-11-18-12-00-00'
+endstr = '2020-11-18-22-00-00'
+
+
 datatype = 'UUID'  # Motion | UUID | TEMP ...
 splitDays = 20 if datatype == 'UUID' else 1
 
