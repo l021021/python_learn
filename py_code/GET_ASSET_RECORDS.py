@@ -37,7 +37,7 @@ password = 'Ft@Sugarcube99'
 locationID = "879448"  # no
 
 startstr = '2020-11-18-12-00-00'
-endstr = '2020-11-18-22-00-00'
+endstr = '2020-11-20-08-00-00'
 
 
 datatype = 'UUID'  # Motion | UUID | TEMP ...

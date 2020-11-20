@@ -4,7 +4,7 @@ import datetime
 import matplotlib as plt
 
 # 导入数据
-filename = "c:\\LOG\\8794482020-11-18-12-00-002020-11-18-22-00-00.csv"  # !! 修改!!!!
+filename = "c:\\LOG\\8794482020-11-18-12-00-002020-11-20-08-00-00.csv"  # !! 修改!!!!
 data = pd.read_csv(filename, parse_dates=[2])
 data['flag'] = ''
 
@@ -13,7 +13,7 @@ print('records:', len(data))
 # 建立时间轴
 # 根据数据生成目标时间格子
 min = datetime.datetime(2020, 11, 18, 12, 0, 0)  # !! 修改!!!!
-max = datetime.datetime(2020, 11, 18, 22, 0, 0)  # !! 修改!!!!
+max = datetime.datetime(2020, 11, 20, 8, 0, 0)  # !! 修改!!!!
 # Gridlist = pd.date_range(min.replace(microsecond=0, second=0, minute=min.minute//5*5), max+pd.DateOffset(minutes=5), freq='5T')
 Gridlist = pd.date_range(min, max, freq='5T')
 
