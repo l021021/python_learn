@@ -58,7 +58,7 @@ count = 0
 
 
 def writetofile():
-    filename = "C:\\LOG\\"+locationID+startstr+endstr+".csv"
+    filename = "C:\\LOG\\"+locationID+"_"+startstr+"_"+endstr+"_RAW.csv"
     with open(filename, 'w', encoding='utf-8', newline='') as f:  # ! 注意修改文件名
         writer = csv.writer(f)
         writer.writerow(['ID', 'EVENT', 'TIME'])

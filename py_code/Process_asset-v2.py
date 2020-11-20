@@ -4,8 +4,8 @@ import datetime
 import matplotlib as plt
 
 # 导入数据
-filename = "c:\\LOG\\8794482020-11-18-12-00-002020-11-20-08-00-00.csv"  # !! 修改!!!!
-data = pd.read_csv(filename, parse_dates=[2])
+filename = "c:\\LOG\\879448_2020-11-18-12-00-00_2020-11-20-08-00-00"  # !! 修改!!!!
+data = pd.read_csv(filename+"_RAW.csv", parse_dates=[2])
 data['flag'] = ''
 
 print('records:', len(data))
@@ -17,7 +17,7 @@ max = datetime.datetime(2020, 11, 20, 8, 0, 0)  # !! 修改!!!!
 # Gridlist = pd.date_range(min.replace(microsecond=0, second=0, minute=min.minute//5*5), max+pd.DateOffset(minutes=5), freq='5T')
 Gridlist = pd.date_range(min, max, freq='5T')
 
-Gridlist = pd.DataFrame(Gridlist, columns=['Time'])
+Gridlist = pd.DataFrame(Gridlist, columns=['TIME'])
 
 # 数据处理
 
@@ -51,13 +51,13 @@ for id in IDSet:
             data1[i][3] = ''
 
     data2 = list(filter(lambda x: x[3] != 'x', data1))
-    data3 = pd.DataFrame(data2, columns=['ID', 'Event', 'Time', 'Flag'])
+    data3 = pd.DataFrame(data2, columns=['ID', 'Event', 'TIME', 'Flag'])
     print('del dup records:', len(data3))
 
     # data3 = data3.sort_values()
 
-    Gridresult = Gridlist.set_index('Time')
-    Gridresult['occ'] = 0.00
+    Gridresult = Gridlist.set_index('TIME')
+    Gridresult['PCT'] = 0.00
     print('results in ', len(Gridresult))
 
     # 先生成计算需要的时间格子
@@ -66,11 +66,11 @@ for id in IDSet:
     print('Target records to go:', biglist.shape[0])
 
     # biglist[pd.isna(biglist['ID'])]
-    biglist.sort_values(by=['Time'], inplace=True)
+    biglist.sort_values(by=['TIME'], inplace=True)
 
     # flag : 前面的状态
     flag = 'free'  # 初识状态为空
-    Gridresult['occ'] = np.nan  # 建立空记录
+    Gridresult['PCT'] = np.nan  # 建立空记录
     # biglist = biglist.values.tolist()
     # print(biglist.shape[0])
     # post :要写进数据的时间格子
@@ -83,13 +83,13 @@ for id in IDSet:
             post = stamp
             if flag == 'free':  #
                 #                 Gridresult.at[post,'occ']= 0.0000 #写入后一个格子
-                if pd.isna(Gridresult.at[post, 'occ']):
-                    Gridresult.at[post, 'occ'] = 0.0
+                if pd.isna(Gridresult.at[post, 'PCT']):
+                    Gridresult.at[post, 'PCT'] = 0.0
                     # print('    continue 0 ', post, Gridresult.at[post, 'occ'])
 
             elif flag == 'occupied':
-                if pd.isna(Gridresult.at[post, 'occ']):
-                    Gridresult.at[post, 'occ'] = 1.0
+                if pd.isna(Gridresult.at[post, 'PCT']):
+                    Gridresult.at[post, 'PCT'] = 1.0
                     # print('    continue 1 ', post, Gridresult.at[post, 'occ'])
 
         else:   # !!说明这是一个事件
@@ -98,9 +98,9 @@ for id in IDSet:
             nextp = post+pd.DateOffset(minutes=5)
             offset = float((nextp-stamp).seconds/300)
             if event == 'free':
-                if pd.isna(Gridresult.at[post, 'occ']):
-                    Gridresult.at[post, 'occ'] = 1.0
-                    print('-- 1.0 assumed', post, Gridresult.at[post, 'occ'])
+                if pd.isna(Gridresult.at[post, 'PCT']):
+                    Gridresult.at[post, 'PCT'] = 1.0
+                    print('-- 1.0 assumed', post, Gridresult.at[post, 'PCT'])
 
                 print('  !!!    ', event, stamp, post, nextp, -offset)
                 offset = -offset
@@ -108,16 +108,16 @@ for id in IDSet:
     #             offset=stamp-post
     #             要在post的格子里面减去offset部分
             elif event == 'occupied':
-                if pd.isna(Gridresult.at[post, 'occ']):
-                    Gridresult.at[post, 'occ'] = 0.0
-                    print('-- 0.0 assumed', post, Gridresult.at[post, 'occ'])
+                if pd.isna(Gridresult.at[post, 'PCT']):
+                    Gridresult.at[post, 'PCT'] = 0.0
+                    print('-- 0.0 assumed', post, Gridresult.at[post, 'PCT'])
 
                 print('  ???  ',       event, stamp, post, nextp, -offset)
                 flag = 'occupied'
                 #             要在post的格子里面加上offset部分
-            print(' -- was', post, Gridresult.at[post, 'occ'], offset)
-            Gridresult.at[post, 'occ'] = float(offset+Gridresult.at[post, 'occ']) if (Gridresult.at[post, 'occ']+offset) > 0 else 0.0000
-            print(' -- now recorded', post, Gridresult.at[post, 'occ'])
+            print(' -- was', post, Gridresult.at[post, 'PCT'], offset)
+            Gridresult.at[post, 'PCT'] = float(offset+Gridresult.at[post, 'PCT']) if (Gridresult.at[post, 'PCT']+offset) > 0 else 0.0000
+            print(' -- now recorded', post, Gridresult.at[post, 'PCT'])
 
     # print(Gridresult.info())
     # Gridresult = Gridresult[Gridresult.occ >= 0]
@@ -126,7 +126,7 @@ for id in IDSet:
     Grid30 = Gridresult
 
     Grid30['ID'] = id
-    Grid30.to_csv(filename+"result", mode='a+')
+    Grid30.to_csv(filename+"_PCT.csv", mode='a+')
 
 
 # Gridresult
