@@ -9,17 +9,16 @@
 
 import csv
 import json
-import sched
-from pprint import pprint
-from time import sleep
 import ssl
 import sys
 import time
-from datetime import datetime, timedelta
 from collections import deque
-import websocket
-from RT import RepeatedTimer
+from datetime import datetime, timedelta
+from pprint import pprint
 
+import websocket
+
+from RT import RepeatedTimer
 
 # The cirrus host to connect to:
 cirrusHost = "cirrus20.yanzi.se"
@@ -55,6 +54,7 @@ requestcount = 0
 HBFlag = 0
 msgQue = deque()
 count = 0
+sessionId=''
 
 
 def writetofile():
@@ -88,18 +88,21 @@ def onMessage(ws, message):
     response = json.loads(message)
     sendFromQue()
     # print('response')
-    global requestcount, HBFlag
+    global requestcount, HBFlag,sessionId
     # HBFlag = 0
 
     if response["messageType"] == "ServiceResponse":
+        # pprint(response)
         print("Got ServiceResponse, sending login request")
         # We got a service response, let’s try to login:
         sendLoginRequest()
     elif response["messageType"] == "LoginResponse":
         if (response['responseCode']['name'] == 'success'):
+            sessionId = response['sessionId']
             sendGetUnitsRequest(locationID)
             sendPeriodicRequest()
         else:
+            print(response)
             sys.exit(-1)
     elif response["messageType"] == "PeriodicResponse":
         HBFlag = 0
@@ -193,7 +196,7 @@ def sendMessagetoQue(message):
 
 def sendServiceRequest():
     request = {"messageType": "ServiceRequest",
-               "version": "1.6.4", "clientId": "123456"}
+               "version": "1.8.1", "clientId": "653498331@qq.com"}
     sendMessagetoQue(request)
 
 
@@ -224,8 +227,13 @@ def sendGetUnitsRequest(locationID):
 
 
 def sendLoginRequest():
-    request = {"messageType": "LoginRequest",
+    if sessionId=='':
+        request = {"messageType": "LoginRequest",
                "username": username, "password": password}
+    else:
+        request = {"messageType": "LoginRequest",
+                   "sessionId": sessionId,
+                   "username": username, "password": password}
     sendMessagetoQue(request)
 
 
@@ -272,4 +280,3 @@ if __name__ == "__main__":
     ws = websocket.WebSocketApp("wss://" + cirrusHost + "/cirrusAPI",
                                 on_message=onMessage, on_close=onClose, on_open=onOpen, keep_running=True)
     ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
-    # periodTimer = threading.Timer(500, sendPeriodicRequest())
