@@ -76,7 +76,8 @@ def sendPeriodicRequest():
         print('Should disconnect ')  # !!
 
     else:
-        print('(', HBFlag, 'periodic request missed )')
+        # print('(', HBFlag, 'periodic request missed )'
+        pass
     sendMessage(request)
 
 
@@ -91,7 +92,11 @@ def onMessage(ws, message):
     global requestcount, HBFlag,sessionId
     # HBFlag = 0
 
-    if response["messageType"] == "ServiceResponse":
+    if response["messageType"] == "ErrorResponse":
+        print(response)
+        sys.exit(-1)
+
+    elif response["messageType"] == "ServiceResponse":
         # pprint(response)
         print("Got ServiceResponse, sending login request")
         # We got a service response, let’s try to login:
@@ -99,19 +104,23 @@ def onMessage(ws, message):
     elif response["messageType"] == "LoginResponse":
         if (response['responseCode']['name'] == 'success'):
             sessionId = response['sessionId']
-            sendGetUnitsRequest(locationID)
+            # sendGetUnitsRequest(locationID)
+            sendSubscribeRequest(locationID,['lifecycle','config','data','assetSlots','occupancy','battery','sensorSlots','assetData','occupancySlots']) #
             sendPeriodicRequest()
         else:
             print(response)
             sys.exit(-1)
     elif response["messageType"] == "PeriodicResponse":
         HBFlag = 0
-        print("( periodic response rcvd )")
+        # print("( periodic response rcvd )")
         rt.start()
 
     elif response["messageType"] == "SubscribeData":
-        print('  Subscription     :', response)
-        # print("onMessage: Got SubscribeData")
+        print('-------\n ')
+        # for list,*other,subscriptionType,timesent in response:
+        print(response['subscriptionType']['name'],response['list'][0]['dataSourceAddress']['did'],response['list'][0]['dataSourceAddress']['variableName']['name'],\
+        response['list'][0]['list'][0]['value'],'\n ')
+        
     elif response["messageType"] == "GetUnitsResponse":
         print("Requesting for records:")
         unitslist = response['list']
@@ -214,7 +223,7 @@ def sendSubscribeRequest(location_id, datatype):
                 "name": type  #
             }
         }
-        sendMessagetoQue(request)
+        sendMessage(request)
         # print('      ', request)
 
 

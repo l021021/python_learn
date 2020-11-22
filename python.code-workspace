@@ -4,5 +4,7 @@
 			"path": "."
 		}
 	],
-	"settings": {}
+    "settings": {
+        "python.pythonPath": "C:\\Users\\65349\\anaconda3\\python.exe"
+    }
 }
