@@ -4,7 +4,7 @@ import datetime
 import matplotlib as plt
 
 # 导入数据
-filename = "c:\\LOG\\879448_2020-11-18-12-00-00_2020-11-20-08-00-00"  # !! 修改!!!!
+filename = "c:\\LOG\\879448_2020-11-18-13-00-00_2020-11-23-17-00-00"  # !! 修改!!!!
 data = pd.read_csv(filename+"_RAW.csv", parse_dates=[2])
 data['flag'] = ''
 
@@ -12,10 +12,14 @@ print('records:', len(data))
 
 # 建立时间轴
 # 根据数据生成目标时间格子
-min = datetime.datetime(2020, 11, 18, 12, 0, 0)  # !! 修改!!!!
-max = datetime.datetime(2020, 11, 20, 8, 0, 0)  # !! 修改!!!!
+min = datetime.datetime(2020, 11, 18, 13, 0, 0) if datetime.datetime(2020, 11, 18, 13, 0, 0) < data['TIME'].min() else data['TIME'].min() #!! 修改!!!!
+max = datetime.datetime(2020, 11, 23, 17, 0, 0) if datetime.datetime(2020, 11, 23, 17, 0, 0) > data['TIME'].max() else data['TIME'].max()  # !! 修改!!!!
+# min = data['TIME'].min()
+# max = data['TIME'].min()
 # Gridlist = pd.date_range(min.replace(microsecond=0, second=0, minute=min.minute//5*5), max+pd.DateOffset(minutes=5), freq='5T')
-Gridlist = pd.date_range(min, max, freq='5T')
+# Gridlist = pd.date_range(min, max, freq='5T')
+Gridlist = pd.date_range(min.replace(microsecond=0, second=0, minute=min.minute//5*5), max+pd.DateOffset(minutes=5), freq='5T')
+
 
 Gridlist = pd.DataFrame(Gridlist, columns=['TIME'])
 
