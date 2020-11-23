@@ -105,7 +105,8 @@ def onMessage(ws, message):
         if (response['responseCode']['name'] == 'success'):
             sessionId = response['sessionId']
             # sendGetUnitsRequest(locationID)
-            sendSubscribeRequest(locationID,['lifecycle','config','data','assetSlots','occupancy','battery','sensorSlots','assetData','occupancySlots']) #
+            sendSubscribeRequest(locationID,['lifecycle','config','data','assetSlots','occupancy','battery',\
+                                             'sensorData','sensorSlots','assetData','occupancySlots']) #
             sendPeriodicRequest()
         else:
             print(response)
@@ -116,10 +117,60 @@ def onMessage(ws, message):
         rt.start()
 
     elif response["messageType"] == "SubscribeData":
-        print('-------\n ')
+        print('\n-------',end='--')
         # for list,*other,subscriptionType,timesent in response:
-        print(response['subscriptionType']['name'],response['list'][0]['dataSourceAddress']['did'],response['list'][0]['dataSourceAddress']['variableName']['name'],\
-        response['list'][0]['list'][0]['value'],'\n ')
+        print(response['subscriptionType']['name'],end='--')
+        print(response['list'][0]['list'][0]['resourceType'],end='--')
+
+        try:
+            if response['subscriptionType']['name'] in ['data','assetData']:
+                print(response['list'][0]['dataSourceAddress']['did'])
+                print(response['list'][0]['dataSourceAddress']['variableName']['name'])
+                # print(response['list'][0]['list'][0]['value'],'\n ')
+                # print(response['list'][0]['list'][0]['assetState']['name'])
+                # for 
+                print((response['list'][0]['list'][0]['value'] if 'value' in response['list'][0]['list'][0] else \
+                    response['list'][0]['list'][0]['assetState']['name']))
+            elif response['subscriptionType']['name'] == 'battery':
+                print(response['list'][0]['dataSourceAddress']['did'])
+                print(response['list'][0]['list'][0]['value'])
+            # print(response['list'][0]['list'][0]['value'],'\n ')
+            # print(response['list'][0]['list'][0]['assetState']['name'])
+            # for 
+                print((response['list'][0]['list'][0]['value'] if 'value' in response['list'][0]['list'][0] else \
+                response['list'][0]['list'][0]['assetState']['name']))
+                
+      
+            elif response['subscriptionType']['name'] =='occupancySlots':
+                print(response['list'][0]['dataSourceAddress']['did'])
+                print(response['list'][0]['list'][0]['sample']['assetState']['name'])
+            elif response['subscriptionType']['name'] =='sensorSlots':
+                print(response['list'][0]['dataSourceAddress']['did'])
+                print(response['list'][0]['list'][0]['aggregateValue'])
+            # elif response['subscriptionType']['name'] =='occupancy':
+                
+            #     print(response['list'][0]['dataSourceAddress']['did'])
+            elif response['subscriptionType']['name'] == 'sensorData':
+                print(response['list'][0]['dataSourceAddress']['did'])
+                print(response['list'][0]['dataSourceAddress']['variableName']['name'])
+
+                print((response['list'][0]['list'][0]['value'] if 'value' in response['list'][0]['list'][0] else \
+                    response['list'][0]['list'][0]['assetState']['name']))
+            elif response['subscriptionType']['name'] =='assetSlots':
+                print(response['list'][0]['dataSourceAddress']['did'])
+                print(response['list'][0]['list'][0]['aggregateValue'])
+            elif response['subscriptionType']['name'] =='occupancy':
+                print(response['list'][0]['dataSourceAddress']['did'])
+                print(response['list'][0]['list'][0]['assetState']['name'])
+            else:
+
+                pprint(response)
+
+                # print(response['list'][0]['dataSourceAddress']['variableName']['name'],response['list'][0]['list'][0]['value'],'\n ')
+            
+        except :
+            print('!!!!!!!!!!!!!!!!')
+            pprint(response)
         
     elif response["messageType"] == "GetUnitsResponse":
         print("Requesting for records:")
@@ -156,7 +207,8 @@ def onMessage(ws, message):
             rt.stop()
             sys.exit(0)
     else:
-        print(response)
+        # print(response)
+        pass
 
 
 # def onError(ws, error):
