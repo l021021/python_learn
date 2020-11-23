@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# coding=utf-8
+#现在要在start之前多读去一条记录
 """
 @author: Bruce
 
