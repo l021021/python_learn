@@ -35,8 +35,8 @@ password = 'Ft@Sugarcube99'
 # locationID = "521209"  # wf
 locationID = "879448"  # no
 
-startstr = '2020-11-18-12-00-00'
-endstr = '2020-11-20-08-00-00'
+startstr = '2020-11-18-13-00-00'
+endstr = '2020-11-23-17-00-00'
 
 
 datatype = 'UUID'  # Motion | UUID | TEMP ...
@@ -114,6 +114,8 @@ def onMessage(ws, message):
         # pprint(unitslist)
         for unit in unitslist:
             if 'UUID' in unit['unitAddress']['did']:
+                sendGetSamplesRequest(
+                    unit['unitAddress']['did'], locationID, startdt, numberOfSamplesBeforeStart=1)
                 sendGetSamplesRequest(
                     unit['unitAddress']['did'], locationID, startdt, enddt)
             # if 'Motion' in unit['unitAddress']['did']:
@@ -228,9 +230,43 @@ def sendLoginRequest():
     sendMessagetoQue(request)
 
 
-def sendGetSamplesRequest(UnitDid, LocationId, start, end):
+def sendGetSamplesRequest(UnitDid, LocationId, start, end='', numberOfSamplesBeforeStart=0):
     # print('    ---', start, end, '  ')
-    if (end - start) <= timedelta(days=splitDays):  # !!为了保证返回的记录数不大于2000,限制时段的天数
+    if end !='':
+        if (end - start) <= timedelta(days=splitDays):  # !!为了保证返回的记录数不大于2000,限制时段的天数
+            request = {
+                "messageType": "GetSamplesRequest",
+                "dataSourceAddress": {
+                    "resourceType": "DataSourceAddress",
+                    "did": UnitDid,
+                    "locationId": LocationId
+                },
+                "timeSerieSelection": {
+                    "resourceType": "TimeSerieSelection",
+                    # "numberOfSamplesBeforeStart": 3,
+                    "timeStart": int(start.timestamp())*1000,
+                    # "timeStart" : int((time.time() - (60 * 3600)) * 1000), # 24 hours
+                    "timeEnd": int(end.timestamp())*1000
+                    # "timeEnd" : int((time.time() - (0 * 3600)) * 1000)
+                }
+            }
+            # print(request["timeSerieSelection"]['timeStart'])
+            global requestcount
+            requestcount += 1
+            print(requestcount, end='.')  # 增加请求计数器
+            # pprint(request)
+            sendMessagetoQue(request)
+        else:
+            # print('2')
+            # time_stamp = int(time.mktime(time.strptime(start, pattern) + 24 * 3600*1000))
+            # startday = datetime.fromtimestamp(time.mktime(time.strptime(start, pattern)))
+            start_time_plus_splitDays = start+timedelta(days=splitDays)
+            # start_time_plus_1D = start+datetime.timedelta(days=20)
+            sendGetSamplesRequest(UnitDid, LocationId, start,
+                                start_time_plus_splitDays)
+            sendGetSamplesRequest(UnitDid, LocationId,
+                                start_time_plus_splitDays, end)
+    elif numberOfSamplesBeforeStart != 0:
         request = {
             "messageType": "GetSamplesRequest",
             "dataSourceAddress": {
@@ -242,27 +278,14 @@ def sendGetSamplesRequest(UnitDid, LocationId, start, end):
                 "resourceType": "TimeSerieSelection",
                 # "numberOfSamplesBeforeStart": 3,
                 "timeStart": int(start.timestamp())*1000,
-                # "timeStart" : int((time.time() - (60 * 3600)) * 1000), # 24 hours
-                "timeEnd": int(end.timestamp())*1000
-                # "timeEnd" : int((time.time() - (0 * 3600)) * 1000)
+                "numberOfSamplesBeforeStart": numberOfSamplesBeforeStart
             }
         }
-        # print(request["timeSerieSelection"]['timeStart'])
-        global requestcount
         requestcount += 1
         print(requestcount, end='.')  # 增加请求计数器
-        # pprint(request)
         sendMessagetoQue(request)
     else:
-        # print('2')
-        # time_stamp = int(time.mktime(time.strptime(start, pattern) + 24 * 3600*1000))
-        # startday = datetime.fromtimestamp(time.mktime(time.strptime(start, pattern)))
-        start_time_plus_splitDays = start+timedelta(days=splitDays)
-        # start_time_plus_1D = start+datetime.timedelta(days=20)
-        sendGetSamplesRequest(UnitDid, LocationId, start,
-                              start_time_plus_splitDays)
-        sendGetSamplesRequest(UnitDid, LocationId,
-                              start_time_plus_splitDays, end)
+        return(-1)
 
 
 if __name__ == "__main__":
