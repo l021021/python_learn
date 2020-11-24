@@ -1,7 +1,11 @@
+from tkinter import Grid
 import pandas as pd
 import numpy as np
 import datetime
 import matplotlib as plt
+_min = datetime.datetime(2020, 11, 18, 13, 0, 0)
+_max = datetime.datetime(2020, 11, 23, 17, 0, 0)
+CSVheader=True
 
 # 导入数据
 filename = "c:\\LOG\\879448_2020-11-18-13-00-00_2020-11-23-17-00-00"  # !! 修改!!!!
@@ -12,8 +16,8 @@ print('records:', len(data))
 
 # 建立时间轴
 # 根据数据生成目标时间格子
-min = datetime.datetime(2020, 11, 18, 13, 0, 0) if datetime.datetime(2020, 11, 18, 13, 0, 0) < data['TIME'].min() else data['TIME'].min() #!! 修改!!!!
-max = datetime.datetime(2020, 11, 23, 17, 0, 0) if datetime.datetime(2020, 11, 23, 17, 0, 0) > data['TIME'].max() else data['TIME'].max()  # !! 修改!!!!
+min = _min if _min < data['TIME'].min() else data['TIME'].min() #!! 修改!!!!
+max = _max if _max > data['TIME'].max() else data['TIME'].max()  # !! 修改!!!!
 # min = data['TIME'].min()
 # max = data['TIME'].min()
 # Gridlist = pd.date_range(min.replace(microsecond=0, second=0, minute=min.minute//5*5), max+pd.DateOffset(minutes=5), freq='5T')
@@ -60,9 +64,9 @@ for id in IDSet:
 
     # data3 = data3.sort_values()
 
-    Gridresult = Gridlist.set_index('TIME')
+    Gridresult = Gridlist.set_index('TIME',drop=False)
     Gridresult['PCT'] = 0.00
-    print('results in ', len(Gridresult))
+    print('results in (GRID):', len(Gridresult))
 
     # 先生成计算需要的时间格子
     biglist = pd.merge(data3, Gridlist, how='outer')
@@ -127,10 +131,20 @@ for id in IDSet:
     # Gridresult = Gridresult[Gridresult.occ >= 0]
     # Gridresult.plot()
     # Grid30 = Gridresult.resample('30T', axis=0).mean()
-    Grid30 = Gridresult
+    # filter= [Gridresult['PCT'] >= 0.5]
+    # Gridresult.reset_index()
+    
+    Gridresult = Gridresult[Gridresult['TIME'] >= _min]
+    Gridresult=Gridresult[Gridresult['TIME'] <= _max]
+    Grid=Gridresult
+    # Grid= Grid[Grid[]<=_max]
 
-    Grid30['ID'] = id
-    Grid30.to_csv(filename+"_PCT.csv", mode='a+')
+    Grid['ID'] = id
+    Grid.set_index('TIME',inplace=True)
+    # Grid.plot()
+  
+    Grid.to_csv(filename+"_PCT.csv", header=CSVheader,mode='a+')
+    CSVheader=False
 
 
 # Gridresult

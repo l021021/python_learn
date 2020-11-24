@@ -1,1 +1,4 @@
 py_cache
+__pycache__
+py_code/__pycache__/RT.cpython-38.pyc
+.gitignore
