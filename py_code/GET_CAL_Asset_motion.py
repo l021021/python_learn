@@ -2,52 +2,58 @@
 """
 @author: Bruce
 
-针对拉取长时间的ASSET
-@TODO: periodic 
 """
 
-import csv
+import datetime
 import json
-import sched
-from pprint import pprint
-from time import sleep
 import ssl
 import sys
 import time
-from datetime import datetime, timedelta
 from collections import deque
-import websocket
-from RT import RepeatedTimer
+from datetime import datetime, timedelta
+from pprint import pprint
+from time import sleep
+from RT  import RepeatedTimer
 
+import matplotlib as plt
+import numpy as np
+import pandas as pd
+import websocket
 
 # The cirrus host to connect to:
 cirrusHost = "cirrus20.yanzi.se"
 
+#!! 需要修改的部分
 # Change the username and password to the Yanzi credentials:
 username = 'frank.shen@pinyuaninfo.com'
 password = 'Ft@Sugarcube99'
-
-# locationID = "879448"  # snf
+locationID = "879448"  # snf
 # locationID = "655623"
 # locationID = "74365"  # kerry
-
 # locationID = "229349"  # ft
 # locationID = "521209"  # wf
-locationID = "879448"  # no
-
+# locationID = "879448"  # no
 startstr = '2020-11-18-13-00-00'
 endstr = '2020-11-25-09-00-00'
+# startdt = datetime.datetime(2020, 11, 18, 13, 0, 0)
+# enddt = datetime.datetime(2020, 11, 25, 9, 0, 0)
 
 
+
+"""
+程序部分
+"""
+CSVheader = True
 datatype = 'UUID'  # Motion | UUID | TEMP ...
 splitDays = 20 if datatype == 'UUID' else 1
-
+filename = "C:\\LOG\\"+locationID+"_"+startstr+"_"+endstr+"_PCT.csv"
 patternr = '%Y-%m-%d-%H-%M-%S'
 patternw = '%Y-%m-%d %H:%M:%S'
 
 startdt = datetime.fromtimestamp(
     (time.mktime(time.strptime(startstr, patternr))))
 enddt = datetime.fromtimestamp((time.mktime(time.strptime(endstr, patternr))))
+
 datalists = []
 csvlist = []
 requestcount = 0
@@ -56,13 +62,150 @@ msgQue = deque()
 count = 0
 
 
-def writetofile():
-    filename = "C:\\LOG\\"+locationID+"_"+startstr+"_"+endstr+"_RAW.csv"
-    with open(filename, 'w', encoding='utf-8', newline='') as f:  # ! 注意修改文件名
-        writer = csv.writer(f)
-        writer.writerow(['ID', 'EVENT', 'TIME'])
-        writer.writerows(csvlist)
-        f.close()
+def calOccupancy():
+    global CSVheader,startdt,enddt
+    data = pd.DataFrame(csvlist,columns=['ID','EVENT','TIME'])
+    data['TIME'] = pd.to_datetime(data['TIME'])
+    data['flag'] = ''
+    # startdt=startdt
+    # enddt=enddt 
+
+    print('records:', len(data))
+
+    # 建立时间轴
+    # 根据数据生成目标时间格子
+    min = startdt if startdt < data['TIME'].min() else data['TIME'].min()  # !! 修改!!!!
+    max = enddt if enddt > data['TIME'].max() else data['TIME'].max()  # !! 修改!!!!
+    # min = data['TIME'].min()
+    # max = data['TIME'].min()
+    # Gridlist = pd.date_range(min.replace(microsecond=0, second=0, minute=min.minute//5*5), max+pd.DateOffset(minutes=5), freq='5T')
+    # Gridlist = pd.date_range(min, max, freq='5T')
+    Gridlist = pd.date_range(min.replace(microsecond=0, second=0, minute=min.minute//5*5), max+pd.DateOffset(minutes=5), freq='5T')
+
+
+    Gridlist = pd.DataFrame(Gridlist, columns=['TIME'])
+
+    # 数据处理
+
+    # 建立ID列表
+    IDSet = set(data['ID'].values)
+
+    # 每个ID循环处理
+    for id in IDSet:
+        print('\nProcessing ', id)
+        data_per_ID = data[data.ID == id]
+        data1 = data_per_ID.values.tolist()
+        print('raw records:', len(data1))
+
+        # 删除MS数据
+        for i in range(1, len(data1)-1):
+            if data1[i][1] == 'missingInput':  # 检查event是否为ms
+                data1[i][2] = 'x'
+
+        data1 = list(filter(lambda x: x[2] != '', data1))
+        print('del ms records:', len(data1))
+
+        # 按照时间排序
+
+        def takeSecond(elem):
+            return elem[1]
+        data1.sort(key=takeSecond)
+
+        # 删除重复in out数据
+        for i in range(1, len(data1)-1):
+            if data1[i][1] == data1[i-1][1]:
+                data1[i][3] = 'x'
+
+        data2 = list(filter(lambda x: x[3] != '', data1))
+        data3 = pd.DataFrame(data2, columns=['ID', 'Event', 'TIME', 'Flag'])
+        print('del dup records:', len(data3))
+
+        # data3 = data3.sort_values()
+
+        Gridresult = Gridlist.set_index('TIME', drop=False)
+        Gridresult['PCT'] = 0.00
+        print('results in (GRID):', len(Gridresult))
+
+        # 先生成计算需要的时间格子
+        biglist = pd.merge(data3, Gridlist, how='outer')
+
+        print('Target records to go:', biglist.shape[0])
+
+        # biglist[pd.isna(biglist['ID'])]
+        biglist.sort_values(by=['TIME'], inplace=True)
+
+        # flag : 前面的状态
+        flag = 'free'  # 初识状态为空
+        Gridresult['PCT'] = np.nan  # 建立空记录
+        # biglist = biglist.values.tolist()
+        # print(biglist.shape[0])
+        # post :要写进数据的时间格子
+        for i in range(biglist.shape[0]):
+            event = biglist.iloc[i, 1]
+            stamp = biglist.iloc[i, 2]  # 事件时间戳
+
+            if pd.isna(event):            # !!说明这是一个插入的格子时间.没有事件,延续当前状态
+                # print('Not event', end='..')
+                post = stamp
+                if flag == 'free':  #
+                    #                 Gridresult.at[post,'occ']= 0.0000 #写入后一个格子
+                    if pd.isna(Gridresult.at[post, 'PCT']):
+                        Gridresult.at[post, 'PCT'] = 0.0
+                        # print('    continue 0 ', post, Gridresult.at[post, 'occ'])
+
+                elif flag == 'occupied':
+                    if pd.isna(Gridresult.at[post, 'PCT']):
+                        Gridresult.at[post, 'PCT'] = 1.0
+                        # print('    continue 1 ', post, Gridresult.at[post, 'occ'])
+
+            else:   # !!说明这是一个事件
+                print(stamp, event, end='..')
+                post = stamp.replace(microsecond=0, second=0, minute=stamp.minute//5*5)  # 记入格子:就是前一个整五分
+                nextp = post+pd.DateOffset(minutes=5)
+                offset = float((nextp-stamp).seconds/300)
+                if event == 'free':
+                    if pd.isna(Gridresult.at[post, 'PCT']):
+                        Gridresult.at[post, 'PCT'] = 1.0
+                        print('-- 1.0 assumed', post, Gridresult.at[post, 'PCT'])
+
+                    print('  !!!    ', event, stamp, post, nextp, -offset)
+                    offset = -offset
+                    flag = 'free'
+        #             offset=stamp-post
+        #             要在post的格子里面减去offset部分
+                elif event == 'occupied':
+                    if pd.isna(Gridresult.at[post, 'PCT']):
+                        Gridresult.at[post, 'PCT'] = 0.0
+                        print('-- 0.0 assumed', post, Gridresult.at[post, 'PCT'])
+
+                    print('  ???  ',       event, stamp, post, nextp, -offset)
+                    flag = 'occupied'
+                    #             要在post的格子里面加上offset部分
+                print(' -- was', post, Gridresult.at[post, 'PCT'], offset)
+                Gridresult.at[post, 'PCT'] = float(offset+Gridresult.at[post, 'PCT']) if (Gridresult.at[post, 'PCT']+offset) > 0 else 0.0000
+                print(' -- now recorded', post, Gridresult.at[post, 'PCT'])
+
+        # print(Gridresult.info())
+        # Gridresult = Gridresult[Gridresult.occ >= 0]
+        # Gridresult.plot()
+        # Grid30 = Gridresult.resample('30T', axis=0).mean()
+        # filter= [Gridresult['PCT'] >= 0.5]
+        # Gridresult.reset_index()
+
+        Gridresult = Gridresult[Gridresult['TIME'] >= startdt]
+        Gridresult = Gridresult[Gridresult['TIME'] <= enddt]
+        Grid = Gridresult
+        # Grid= Grid[Grid[]<=enddt]
+
+        Grid['ID'] = id
+        Grid.set_index('TIME', inplace=True)
+        # Grid.plot()
+
+        Grid.to_csv(filename, header=CSVheader, mode='a+')
+        CSVheader = False
+    sys.exit(1)
+
+
 
 
 def sendPeriodicRequest():
@@ -141,8 +284,9 @@ def onMessage(ws, message):
                           ['did'], eventtime, li['value'])
         if requestcount == 0:
             print('\n', datetime.now(), ' Mission Accomplished')
-            writetofile()
             rt.stop()
+            ws.close()
+            calOccupancy()
             sys.exit(0)
     else:
         print(response)
