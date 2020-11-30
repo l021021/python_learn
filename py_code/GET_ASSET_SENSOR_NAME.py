@@ -1,19 +1,22 @@
-#现在要在start之前多读去一条记录
+# -*- coding: utf-8 -*-
+# coding=utf-8
 """
 @author: Bruce
 
+针对拉取长时间的ASSET
+@TODO: periodic 
 """
 
 import csv
 import json
-import sched
-from pprint import pprint
-from time import sleep
 import ssl
 import sys
 import time
-from datetime import datetime, timedelta
 from collections import deque
+from datetime import datetime, timedelta
+import pandas as pd
+from pprint import pprint
+
 import websocket
 
 
@@ -33,45 +36,57 @@ password = 'Ft@Sugarcube99'
 locationID = "879448"  # no
 
 datalists = []
-csvlist = []
+sensorList = dict()
 requestcount = 0
 HBFlag = 0
 msgQue = deque()
 count = 0
-sensorList=dict()
+sessionId = ''
+
+
 
 def onMessage(ws, message):
+    global rt
     response = json.loads(message)
+    sendFromQue()
     # print('response')
-    global requestcount, HBFlag
+    global requestcount, HBFlag, sessionId
     # HBFlag = 0
 
-    if response["messageType"] == "ServiceResponse":
+    if response["messageType"] == "ErrorResponse":
+        print(response)
+        sys.exit(-1)
+
+    elif response["messageType"] == "ServiceResponse":
+        # pprint(response)
         print("Got ServiceResponse, sending login request")
         # We got a service response, let’s try to login:
         sendLoginRequest()
     elif response["messageType"] == "LoginResponse":
         if (response['responseCode']['name'] == 'success'):
+            sessionId = response['sessionId']
             sendGetUnitsRequest(locationID)
         else:
+            print(response)
             sys.exit(-1)
-
-    elif response["messageType"] == "SubscribeData":
-        print('  Subscription     :', response)
-        # print("onMessage: Got SubscribeData")
+ 
+    
     elif response["messageType"] == "GetUnitsResponse":
-        print("processing names of sensors and assets:")
+        print("Requesting for records:")
         unitslist = response['list']
         # pprint(unitslist)
         for unit in unitslist:
-            if 'UUID' in unit['unitAddress']['did'] and 'nameSetByUser' in unit:
+            # if 'UUID' in unit['unitAddress']['did'] and 'nameSetByUser' in unit:
+            if 'nameSetByUser' in unit:
                 sensorList[unit['unitAddress']['did']]=unit['nameSetByUser']
-                # pprint(sensorList)
-            # else:
-            #     pprint(unit)
-            #     pass
-    else:
-        print(response)
+        if len(sensorList)>0 :
+            list=pd.DataFrame.from_dict(sensorList,orient='index',columns=['NAME'])
+            
+            list.sort_values(by='NAME',inplace = True)
+            pprint(list)        
+            list.to_csv('C:\\LOG\\'+locationID+'_name.csv',mode='w',encoding='utf-8')
+            sys.exit(-1)
+
 
 
 # def onError(ws, error):
@@ -87,6 +102,13 @@ def onOpen(ws):
     sendServiceRequest()
     # periodTimer(1, sendPeriodicRequest())
 
+
+def sendFromQue():
+    global msgQue
+    if len(msgQue) != 0:
+        ws.send(msgQue.pop())
+
+
 def sendMessage(message):
     if ws.sock.connected != True:
         print("sendMessage: Could not send cirrus message, socket not open")
@@ -99,22 +121,40 @@ def sendMessage(message):
         print("sendMessage: Could not send cirrus message: ", message)
         return
 # append message in global que
+
+
+def sendMessagetoQue(message):
+    global msgQue
+    message['timeSent'] = int(time.time() * 1000)
+    msg = json.dumps(message)
+    msgQue.append(msg)
+    # print('sending message')
+    if len(msgQue) < 5:  # !! window size
+        ws.send(msgQue.pop())
+
+
 def sendServiceRequest():
     request = {"messageType": "ServiceRequest",
-               "version": "1.6.4", "clientId": "123456"}
-    sendMessage(request)
+               "version": "1.8.1", "clientId": "653498331@qq.com"}
+    sendMessagetoQue(request)
+
 
 def sendGetUnitsRequest(locationID):
     request = {"messageType": 'GetUnitsRequest', "timeSent": int(time.time(
     ) * 1000), "locationAddress": {"resourceType": 'LocationAddress', "locationId": locationID}}
     print('sending getunits request for ' + locationID)
-    sendMessage(request)
+    sendMessagetoQue(request)
 
 
 def sendLoginRequest():
-    request = {"messageType": "LoginRequest",
-               "username": username, "password": password}
-    sendMessage(request)
+    if sessionId == '':
+        request = {"messageType": "LoginRequest",
+                   "username": username, "password": password}
+    else:
+        request = {"messageType": "LoginRequest",
+                   "sessionId": sessionId,
+                   "username": username, "password": password}
+    sendMessagetoQue(request)
 
 
 if __name__ == "__main__":
@@ -123,4 +163,3 @@ if __name__ == "__main__":
     ws = websocket.WebSocketApp("wss://" + cirrusHost + "/cirrusAPI",
                                 on_message=onMessage, on_close=onClose, on_open=onOpen, keep_running=True)
     ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
-    # periodTimer = threading.Timer(500, sendPeriodicRequest())

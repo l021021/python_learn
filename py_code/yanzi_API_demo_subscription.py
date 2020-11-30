@@ -144,6 +144,9 @@ def onMessage(ws, message):
             elif response['subscriptionType']['name'] =='occupancySlots':
                 print(response['list'][0]['dataSourceAddress']['did'])
                 print(response['list'][0]['list'][0]['sample']['assetState']['name'])
+            elif response['subscriptionType']['name'] =='lifecycle':
+                print(response['list'][0]['dataSourceAddress']['did'])
+                print(response['list'][0]['list'][0]['deviceUpState']['name'])
             elif response['subscriptionType']['name'] =='sensorSlots':
                 print(response['list'][0]['dataSourceAddress']['did'])
                 print(response['list'][0]['list'][0]['aggregateValue'])
