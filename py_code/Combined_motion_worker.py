@@ -34,7 +34,7 @@ locationID = "879448"  # snf
 # locationID = "521209"  # wf
 # locationID = "879448"  # no
 startstr = '2020-11-18-13-00-00'
-endstr = '2020-11-30-17-00-00'
+endstr = '2020-12-07-16-00-00'
 # startdt = datetime.datetime(2020, 11, 18, 13, 0, 0)
 # enddt = datetime.datetime(2020, 11, 25, 9, 0, 0)
 

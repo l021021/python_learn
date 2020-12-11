@@ -27,14 +27,14 @@ cirrusHost = "cirrus20.yanzi.se"
 # Change the username and password to the Yanzi credentials:
 username = 'frank.shen@pinyuaninfo.com'
 password = 'Ft@Sugarcube99'
-# locationID = "879448"  # snf
+locationID = "879448"  # snf
 # locationID = "655623"
 # locationID = "74365"  # kerry
 # locationID = "229349"  # ft
 # locationID = "521209"  # wf
 locationID = "797296"  # nf
-startstr = '2020-11-01-00-00-00'
-endstr = '2020-11-30-23-59-59'
+startstr = '2020-11-19-00-00-00'
+endstr = '2020-12-11-16-59-59'
 
 
 
@@ -42,7 +42,7 @@ endstr = '2020-11-30-23-59-59'
 程序部分
 """
 CSVheader = True
-datatype = 'UUID'  # Motion | UUID | TEMP ...
+datatype = 'Motion'  # Motion | UUID | TEMP ...
 splitDays = 20 if datatype == 'UUID' else 1
 filename = "C:\\LOG\\"+locationID+"_"+startstr+"_"+endstr+'_'+datatype+"_PCT.csv"
 patternr = '%Y-%m-%d-%H-%M-%S'
@@ -298,8 +298,7 @@ def onMessage(ws, message):
                     csvlist.append([response['sampleListDto']['dataSourceAddress']
                                     ['did'], li['assetState']['name'], eventtime])
                 elif li['resourceType'] == 'SampleMotion':
-                    print(response['sampleListDto']['dataSourceAddress']
-                          ['did'], eventtime, li['value'])
+                    # print(response['sampleListDto']['dataSourceAddress']['did'], eventtime, li['value'])
                     csvlist.append([response['sampleListDto']['dataSourceAddress']
                                     ['did'], li['value'], eventtime])
         if requestcount == 0:
