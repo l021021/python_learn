@@ -1,6 +1,13 @@
 #现在要在start之前多读去一条记录
 """
 @author: Bruce
+首先通过调用历史书籍接口,把数据(ID 时间 事件)存在数组里,第二部处理数组,存入文件
+
+需要填 起止时间 
+       location
+       数据类型
+       
+       文件的默认目录是 c:\LOG
 
 """
 
@@ -32,9 +39,10 @@ locationID = "879448"  # snf
 # locationID = "74365"  # kerry
 # locationID = "229349"  # ft
 # locationID = "521209"  # wf
-locationID = "797296"  # nf
-startstr = '2020-11-19-00-00-00'
-endstr = '2020-12-11-16-59-59'
+# locationID = "797296"  # nf
+startstr = '2020-12-11-00-00-00'
+endstr = '2020-12-16-16-59-59'
+datatype = 'UUID'  # Motion | UUID  #选择要采的数据类型
 
 
 
@@ -42,9 +50,10 @@ endstr = '2020-12-11-16-59-59'
 程序部分
 """
 CSVheader = True
-datatype = 'Motion'  # Motion | UUID | TEMP ...
 splitDays = 20 if datatype == 'UUID' else 1
 filename = "C:\\LOG\\"+locationID+"_"+startstr+"_"+endstr+'_'+datatype+"_PCT.csv"
+filename1 = "C:\\LOG\\"+locationID+"_"+startstr+"_"+endstr+'_'+datatype+"_RAW.csv"
+
 patternr = '%Y-%m-%d-%H-%M-%S'
 patternw = '%Y-%m-%d %H:%M:%S'
 
@@ -53,7 +62,7 @@ startdt = datetime.fromtimestamp(
 enddt = datetime.fromtimestamp((time.mktime(time.strptime(endstr, patternr))))
 
 datalists = []
-csvlist = []
+motionRecordList = [] # motion记录数组,包含ID 时间戳 时间
 requestcount = 0
 HBFlag = 0
 msgQue = deque()
@@ -62,7 +71,8 @@ count = 0
 
 def calOccupancy():
     global CSVheader, startdt, enddt
-    data = pd.DataFrame(csvlist, columns=['ID', 'EVENT', 'TIME'])
+    data = pd.DataFrame(motionRecordList, columns=['ID', 'EVENT', 'TIME'])
+    data.to_csv(filename1)
     data['TIME'] = pd.to_datetime(data['TIME'])
     data['flag'] = '' #加入第三列,作为以后处理的标志位
     # startdt=startdt
@@ -295,11 +305,11 @@ def onMessage(ws, message):
                 eventtime = datetime.fromtimestamp(
                     int(li['sampleTime']/1000)).strftime(patternw)
                 if li['resourceType'] == "SampleAsset":
-                    csvlist.append([response['sampleListDto']['dataSourceAddress']
+                    motionRecordList.append([response['sampleListDto']['dataSourceAddress']
                                     ['did'], li['assetState']['name'], eventtime])
                 elif li['resourceType'] == 'SampleMotion':
                     # print(response['sampleListDto']['dataSourceAddress']['did'], eventtime, li['value'])
-                    csvlist.append([response['sampleListDto']['dataSourceAddress']
+                    motionRecordList.append([response['sampleListDto']['dataSourceAddress']
                                     ['did'], li['value'], eventtime])
         if requestcount == 0:
             print('\n', datetime.now(), ' Mission Accomplished')
