@@ -72,7 +72,7 @@ count = 0
 def calOccupancy():
     global CSVheader, startdt, enddt
     data = pd.DataFrame(motionRecordList, columns=['ID', 'EVENT', 'TIME'])
-    data.to_csv(filename1)
+    data.to_csv(filename1,index=None)
     data['TIME'] = pd.to_datetime(data['TIME'])
     data['flag'] = '' #加入第三列,作为以后处理的标志位
     # startdt=startdt
