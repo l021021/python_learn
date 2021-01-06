@@ -40,8 +40,8 @@ locationID = "879448"  # snf
 # locationID = "229349"  # ft
 # locationID = "521209"  # wf
 # locationID = "797296"  # nf
-startstr = '2020-12-11-00-00-00'
-endstr = '2020-12-16-16-59-59'
+startstr = '2020-11-19-00-00-00'
+endstr = '2020-12-21-23-59-59'
 datatype = 'UUID'  # Motion | UUID  #选择要采的数据类型
 
 

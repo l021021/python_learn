@@ -2,7 +2,9 @@
 # coding=utf-8
 """
 @author: Bruce
+从传感器列表,批量修改EUID和对应UUID的logical name
 
+需要从UUID的datasource 查出传感器的euid,形成对应关系
 
 """
 
@@ -32,13 +34,7 @@ password = 'Ft@Sugarcube99'
 
 # locationID = "229349"  # ft
 # locationID = "521209"  # wf
-# locationID = "879448"  # snf
-# locationID = "251092"  # yuanjin4
-# locationID = "834706"  # yuanjin2
-# locationID = "234190"  # yuanjin3
-# locationID = "725728"  # yuanjin5
-locationID = "368307"  # yuanjin1
-
+locationID = "879448"  # snf
 
 datalists = []
 sensorList = dict()
