@@ -282,12 +282,63 @@ def sendSubscribeRequest(location_id, datatype):
         # print('      ', request)
 
 
+def setUnitPropertyRequest(locationId, did, name):
+    request_data = {
+        "messageType": "SetUnitPropertyRequest",
+        "unitAddress": {
+            "resourceType": "UnitAddress",
+            "did": did,
+            "locationId": locationId
+        },
+        "unitProperty": {
+            "resourceType": "UnitProperty",
+            "name": "logicalName",
+            "value": name
+        }
+    }
+
+    sendMessage(request_data)
+
+
 
 def sendGetUnitsRequest(locationID):
     request = {"messageType": 'GetUnitsRequest', "timeSent": int(time.time(
     ) * 1000), "locationAddress": {"resourceType": 'LocationAddress', "locationId": locationID}}
     print('sending getunits request for ' + locationID)
     sendMessagetoQue(request)
+
+
+def setUnitPropertyRequest(locationId, did, name):
+    request_data = {
+        "messageType": "SetUnitPropertyRequest",
+        "unitAddress": {
+            "resourceType": "UnitAddress",
+            "did": did,
+            "locationId": locationId
+        },
+        "unitProperty": {
+            "resourceType": "UnitProperty",
+            "name": "logicalName",
+            "value": name
+        }
+    }
+
+    sendMessage(request_data)
+
+
+def get_unit_property():
+    request = {
+        "messageType": "GetUnitPropertyRequest",
+        "timeSent": 1609746867000,
+        "unitAddress": {
+            "resourceType": "UnitAddress",
+            "timeCreated": 1609746867000,
+            "did": "UUID-F0E454CAC23D49768470DECD14069F7C",
+            "locationId": '251092'
+        },
+        "name": "dataSource"
+    }
+    sendMessage(request)
 
 
 def sendLoginRequest():

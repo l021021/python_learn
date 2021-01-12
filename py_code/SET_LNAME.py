@@ -93,6 +93,20 @@ def onMessage(ws, message):
 # def onError(ws, error):
 #     print("Error", error)
 
+def sendGetUnitsRequest(passLoc):
+    request = {
+        "messageType": "GetUnitsRequest",
+        "timeSent": int(time.time() * 1000),
+        "locationAddress": {
+            "resourceType": "LocationAddress",
+            "locationId": passLoc
+        }
+    }
+
+    sendMessage(request)
+
+
+
 
 def onClose(ws):
     print("\n----Connection to Cloud closed----\n")
