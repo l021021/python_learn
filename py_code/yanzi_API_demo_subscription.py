@@ -33,8 +33,9 @@ password = 'Ft@Sugarcube99'
 
 # locationID = "229349"  # ft
 # locationID = "521209"  # wf
-locationID = "879448"  # no
-
+# locationID = "879448"  # no
+locationID = "234190"  # yuj3
+locationID = "725728"  # yuj5
 startstr = '2020-11-18-12-00-00'
 endstr = '2020-11-20-08-00-00'
 
@@ -105,8 +106,9 @@ def onMessage(ws, message):
         if (response['responseCode']['name'] == 'success'):
             sessionId = response['sessionId']
             # sendGetUnitsRequest(locationID)
-            sendSubscribeRequest(locationID,['lifecycle','config','data','assetSlots','occupancy','battery',\
-                                             'sensorData','sensorSlots','assetData','occupancySlots']) #
+            sendSubscribeRequest(locationID,['lifecycle']) #
+            #        sendSubscribeRequest(locationID,['lifecycle','config','data','assetSlots','occupancy','battery',\
+            #                                  'sensorData','sensorSlots','assetData','occupancySlots']) #
             sendPeriodicRequest()
         else:
             print(response)
@@ -120,7 +122,7 @@ def onMessage(ws, message):
         print('\n-------',end='--')
         # for list,*other,subscriptionType,timesent in response:
         print(response['subscriptionType']['name'],end='--')
-        print(response['list'][0]['list'][0]['resourceType'],end='--')
+        # print(response['list'][0]['list'][0]['resourceType'],end='--')
 
         try:
             if response['subscriptionType']['name'] in ['data','assetData']:
@@ -145,8 +147,9 @@ def onMessage(ws, message):
                 print(response['list'][0]['dataSourceAddress']['did'])
                 print(response['list'][0]['list'][0]['sample']['assetState']['name'])
             elif response['subscriptionType']['name'] =='lifecycle':
-                print(response['list'][0]['dataSourceAddress']['did'])
-                print(response['list'][0]['list'][0]['deviceUpState']['name'])
+                print(response['list'][0]['eventType']['name'])
+                print(response['list'][0]['unitAddress']['did'])
+                # print(response['list'][0]['list'][0]['deviceUpState']['name'])
             elif response['subscriptionType']['name'] =='sensorSlots':
                 print(response['list'][0]['dataSourceAddress']['did'])
                 print(response['list'][0]['list'][0]['aggregateValue'])
