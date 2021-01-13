@@ -34,14 +34,20 @@ cirrusHost = "cirrus20.yanzi.se"
 # Change the username and password to the Yanzi credentials:
 username = 'frank.shen@pinyuaninfo.com'
 password = 'Ft@Sugarcube99'
-locationID = "879448"  # snf
+# locationID = "879448"  # snf
 # locationID = "655623"
 # locationID = "74365"  # kerry
 # locationID = "229349"  # ft
 # locationID = "521209"  # wf
 # locationID = "797296"  # nf
-startstr = '2020-12-11-00-00-00'
-endstr = '2020-12-16-16-59-59'
+
+# locationID = "251092"  # yuanjin4
+# locationID = "834706"  # yuanjin2
+locationID = "234190"  # yuanjin3
+# locationID = "725728"  # yuanjin5
+# locationID = "368307"  # yuanjin1
+startstr = '2021-01-11-08-00-00'
+endstr = '2021-01-11-15-29-59'
 datatype = 'UUID'  # Motion | UUID  #选择要采的数据类型
 
 

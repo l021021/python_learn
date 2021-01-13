@@ -2,7 +2,9 @@
 # coding=utf-8
 """
 @author: Bruce
+从传感器列表,批量修改EUID和对应UUID的logical name
 
+需要从UUID的datasource 查出传感器的euid,形成对应关系
 
 """
 
@@ -32,13 +34,7 @@ password = 'Ft@Sugarcube99'
 
 # locationID = "229349"  # ft
 # locationID = "521209"  # wf
-# locationID = "879448"  # snf
-# locationID = "368307"  # yuanjin1
-# locationID = "834706"  # yuanjin2
-locationID = "234190"  # yuanjin3
-locationID = "251092"  # yuanjin4
-locationID = "725728"  # yuanjin5
-
+locationID = "879448"  # snf
 
 datalists = []
 sensorList = dict()
@@ -83,7 +79,7 @@ def onMessage(ws, message):
         for unit in unitslist:
             # if 'UUID' in unit['unitAddress']['did'] and 'nameSetByUser' in unit:
             if 'nameSetByUser' in unit:
-                sensorList[unit['unitAddress']['did']] = '"'+unit['nameSetByUser']+'"'
+                sensorList[unit['unitAddress']['did']]=unit['nameSetByUser']
         if len(sensorList)>0 :
             list=pd.DataFrame.from_dict(sensorList,orient='index',columns=['NAME'])
             
@@ -96,6 +92,20 @@ def onMessage(ws, message):
 
 # def onError(ws, error):
 #     print("Error", error)
+
+def sendGetUnitsRequest(passLoc):
+    request = {
+        "messageType": "GetUnitsRequest",
+        "timeSent": int(time.time() * 1000),
+        "locationAddress": {
+            "resourceType": "LocationAddress",
+            "locationId": passLoc
+        }
+    }
+
+    sendMessage(request)
+
+
 
 
 def onClose(ws):

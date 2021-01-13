@@ -33,15 +33,16 @@ password = 'Ft@Sugarcube99'
 # locationID = "229349"  # ft
 # locationID = "521209"  # wf
 # locationID = "879448"  # snf
-# locationID = "368307"  # yuanjin1
+# locationID = "251092"  # yuanjin4
 # locationID = "834706"  # yuanjin2
-locationID = "234190"  # yuanjin3
-locationID = "251092"  # yuanjin4
-locationID = "725728"  # yuanjin5
+# locationID = "234190"  # yuanjin3
+# locationID = "725728"  # yuanjin5
+locationID = "368307"  # yuanjin1
 
 
 datalists = []
 sensorList = dict()
+assetList = dict()
 requestcount = 0
 HBFlag = 0
 msgQue = deque()
@@ -74,28 +75,90 @@ def onMessage(ws, message):
         else:
             print(response)
             sys.exit(-1)
+    elif response["messageType"] == "GetUnitPropertyResponse":
+            if (response['responseCode']['name'] == 'success'):
+                # assetParemtID
+                # print('\n')
+                assetList[response['unitAddress']['did']]=response['list'][0]['value']
+                print(assetList)
+                # print(response)
+ 
  
     
     elif response["messageType"] == "GetUnitsResponse":
         print("Requesting for records:")
         unitslist = response['list']
-        # pprint(unitslist)
         for unit in unitslist:
             # if 'UUID' in unit['unitAddress']['did'] and 'nameSetByUser' in unit:
+            # pprint(unit)
             if 'nameSetByUser' in unit:
-                sensorList[unit['unitAddress']['did']] = '"'+unit['nameSetByUser']+'"'
+                sensorList[unit['unitAddress']['did']]=unit['nameSetByUser']
+                GetUnitPropertyRequest(locationID, unit['unitAddress']['did'],'assetParentId')
         if len(sensorList)>0 :
             list=pd.DataFrame.from_dict(sensorList,orient='index',columns=['NAME'])
             
             list.sort_values(by='NAME',inplace = True)
             pprint(list)        
             list.to_csv('C:\\LOG\\'+locationID+'_name.csv',mode='w',encoding='utf-8')
-            sys.exit(-1)
+            # sys.exit(-1)
+    else:
+        
+        print('\n',response)
+        
 
 
+def GetUnitPropertyRequest(locationId, did, propertyName):
+    request_data ={
+        "messageType": "GetUnitPropertyRequest",
+        "unitAddress": {
+        "resourceType": "UnitAddress",
+        "timeCreated": 1587560556552,
+        "did": did,
+        "locationId": locationId,
+           },
+          "name": propertyName
+          }
+    # assetParentId
+    print('Checking the Asset Parent:',did)
+    sendMessage(request_data)
 
 # def onError(ws, error):
 #     print("Error", error)
+
+def setDisplayFlag(locationId, did, displayFlag):
+    request_data = {
+        "messageType": "SetUnitPropertyRequest",
+        "unitAddress": {
+            "resourceType": "UnitAddress",
+            "did": did,
+            "locationId": locationId
+        },
+        "unitProperty": {
+            "resourceType": "UnitProperty",
+            "name": "showUtilization",
+            "value": displayFlag
+        }
+    }
+
+    sendMessage(request_data)
+
+
+def setUnitLogicName(locationId, did, logicName):
+    request_data = {
+        "messageType": "SetUnitPropertyRequest",
+        "unitAddress": {
+            "resourceType": "UnitAddress",
+            "did": did,
+            "locationId": locationId
+        },
+        "unitProperty": {
+            "resourceType": "UnitProperty",
+            "name": "logicalName",
+            "value": logicName
+        }
+    }
+
+    sendMessage(request_data)
 
 
 def onClose(ws):
