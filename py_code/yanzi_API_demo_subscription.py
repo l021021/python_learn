@@ -105,8 +105,9 @@ def onMessage(ws, message):
         if (response['responseCode']['name'] == 'success'):
             sessionId = response['sessionId']
             # sendGetUnitsRequest(locationID)
-            sendSubscribeRequest(locationID,['lifecycle','config','data','assetSlots','occupancy','battery',\
-                                             'sensorData','sensorSlots','assetData','occupancySlots']) #
+            sendSubscribeRequest(locationID,['lifecycle']) #
+            #        sendSubscribeRequest(locationID,['lifecycle','config','data','assetSlots','occupancy','battery',\
+            #                                  'sensorData','sensorSlots','assetData','occupancySlots']) #
             sendPeriodicRequest()
         else:
             print(response)
@@ -120,7 +121,7 @@ def onMessage(ws, message):
         print('\n-------',end='--')
         # for list,*other,subscriptionType,timesent in response:
         print(response['subscriptionType']['name'],end='--')
-        print(response['list'][0]['list'][0]['resourceType'],end='--')
+        # print(response['list'][0]['list'][0]['resourceType'],end='--')
 
         try:
             if response['subscriptionType']['name'] in ['data','assetData']:
@@ -145,8 +146,9 @@ def onMessage(ws, message):
                 print(response['list'][0]['dataSourceAddress']['did'])
                 print(response['list'][0]['list'][0]['sample']['assetState']['name'])
             elif response['subscriptionType']['name'] =='lifecycle':
-                print(response['list'][0]['dataSourceAddress']['did'])
-                print(response['list'][0]['list'][0]['deviceUpState']['name'])
+                print(response['list'][0]['eventType']['name'])
+                print(response['list'][0]['unitAddress']['did'])
+                # print(response['list'][0]['list'][0]['deviceUpState']['name'])
             elif response['subscriptionType']['name'] =='sensorSlots':
                 print(response['list'][0]['dataSourceAddress']['did'])
                 print(response['list'][0]['list'][0]['aggregateValue'])
