@@ -51,7 +51,7 @@ sessionId = ''
 
 
 def onMessage(ws, message):
-    global rt
+    # global rt
     response = json.loads(message)
     sendFromQue()
     # print('response')

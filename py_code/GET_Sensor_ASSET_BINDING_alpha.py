@@ -2,7 +2,7 @@
 # coding=utf-8
 """
 @author: Bruce
-
+ 首先根据assetparet 属性建立 euid和UUID的对应关系，然后对应到givenname，最后可以统一改名字
 
 """
 
@@ -77,10 +77,12 @@ def onMessage(ws, message):
             sys.exit(-1)
     elif response["messageType"] == "GetUnitPropertyResponse":
             if (response['responseCode']['name'] == 'success'):
-                # assetParemtID
+                # assetParemtID 
                 # print('\n')
                 assetList[response['unitAddress']['did']]=response['list'][0]['value']
-                print(assetList)
+                sensorList[response['unitAddress']['did']][1] = response['list'][0]['value']
+
+                # print(assetList)
                 # print(response)
  
  
@@ -92,10 +94,10 @@ def onMessage(ws, message):
             # if 'UUID' in unit['unitAddress']['did'] and 'nameSetByUser' in unit:
             # pprint(unit)
             if 'nameSetByUser' in unit:
-                sensorList[unit['unitAddress']['did']]=unit['nameSetByUser']
+                sensorList[unit['unitAddress']['did']]=[unit['nameSetByUser'],'']
                 GetUnitPropertyRequest(locationID, unit['unitAddress']['did'],'assetParentId')
         if len(sensorList)>0 :
-            list=pd.DataFrame.from_dict(sensorList,orient='index',columns=['NAME'])
+            list=pd.DataFrame.from_dict(sensorList,orient='index',columns=['NAME','ASSET'])
             
             list.sort_values(by='NAME',inplace = True)
             pprint(list)        
@@ -119,7 +121,7 @@ def GetUnitPropertyRequest(locationId, did, propertyName):
           "name": propertyName
           }
     # assetParentId
-    print('Checking the Asset Parent:',did)
+    # print('Checking the Asset Parent for:',did)
     sendMessage(request_data)
 
 # def onError(ws, error):
