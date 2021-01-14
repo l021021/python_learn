@@ -55,6 +55,7 @@ HBFlag = 0
 msgQue = deque()
 count = 0
 
+rt = RepeatedTimer(300, sendPeriodicRequest)
 
 def writetofile():
     filename = "C:\\LOG\\"+locationID+"_"+startstr+"_"+endstr+"_RAW.csv"

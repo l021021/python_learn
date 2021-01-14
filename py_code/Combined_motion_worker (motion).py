@@ -41,13 +41,13 @@ password = 'Ft@Sugarcube99'
 # locationID = "521209"  # wf
 # locationID = "797296"  # nf
 
-# locationID = "251092"  # yuanjin4
-# locationID = "834706"  # yuanjin2
+locationID = "368307"  # yuanjin1
+locationID = "834706"  # yuanjin2
 locationID = "234190"  # yuanjin3
-# locationID = "725728"  # yuanjin5
-# locationID = "368307"  # yuanjin1
-startstr = '2021-01-11-08-00-00'
-endstr = '2021-01-11-15-29-59'
+locationID = "251092"  # yuanjin4
+locationID = "725728"  # yuanjin5
+startstr = '2021-01-12-08-00-00'
+endstr = '2021-01-14-08-00-00'
 datatype = 'UUID'  # Motion | UUID  #选择要采的数据类型
 
 

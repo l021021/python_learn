@@ -15,6 +15,7 @@ from collections import deque
 from datetime import datetime, timedelta
 import pandas as pd
 from pprint import pprint
+from RT import RepeatedTimer
 
 import websocket
 
@@ -27,7 +28,7 @@ username = 'frank.shen@pinyuaninfo.com'
 password = 'Ft@Sugarcube99'
 
 # locationID = "879448"  # snf
-# locationID = "655623"
+locationID = "252208"
 # locationID = "74365"  # kerry
 
 # locationID = "229349"  # ft
@@ -37,7 +38,7 @@ password = 'Ft@Sugarcube99'
 # locationID = "834706"  # yuanjin2
 # locationID = "234190"  # yuanjin3
 # locationID = "725728"  # yuanjin5
-locationID = "368307"  # yuanjin1
+# locationID = "368307"  # yuanjin1
 
 
 datalists = []
@@ -52,7 +53,7 @@ sessionId = ''
 
 
 def onMessage(ws, message):
-    global rt
+    # global rt
     response = json.loads(message)
     sendFromQue()
     # print('response')
@@ -60,8 +61,8 @@ def onMessage(ws, message):
     # HBFlag = 0
 
     if response["messageType"] == "ErrorResponse":
-        print(response)
-        sys.exit(-1)
+        print('Error',response)
+        # sys.exit(-1)
 
     elif response["messageType"] == "ServiceResponse":
         # pprint(response)
@@ -96,6 +97,12 @@ def onMessage(ws, message):
             if 'nameSetByUser' in unit:
                 sensorList[unit['unitAddress']['did']]=[unit['nameSetByUser'],'']
                 GetUnitPropertyRequest(locationID, unit['unitAddress']['did'],'assetParentId')
+                
+                if unit['unitAddress']['did'].find('UU')!=-1: #显示资产名称
+                    setDisplayFlag(locationID, unit['unitAddress']['did'], 'true')
+                    print('XXX',unit['unitAddress']['did'])
+            else:
+                print('noname', unit['unitAddress']['did']) #逻辑传感器 和网关
         if len(sensorList)>0 :
             list=pd.DataFrame.from_dict(sensorList,orient='index',columns=['NAME','ASSET'])
             
@@ -129,17 +136,18 @@ def GetUnitPropertyRequest(locationId, did, propertyName):
 
 def setDisplayFlag(locationId, did, displayFlag):
     request_data = {
-        "messageType": "SetUnitPropertyRequest",
-        "unitAddress": {
+        "messageType": "SetCustomPropertyRequest",
+        "address": {
             "resourceType": "UnitAddress",
             "did": did,
             "locationId": locationId
         },
-        "unitProperty": {
-            "resourceType": "UnitProperty",
-            "name": "showUtilization",
+        "property": {
+            "resourceType": "CustomPropertyDTO",
+            "timeCreated": 1607423084116,
+            "name": "showLabel",
             "value": displayFlag
-        }
+    }
     }
 
     sendMessage(request_data)
