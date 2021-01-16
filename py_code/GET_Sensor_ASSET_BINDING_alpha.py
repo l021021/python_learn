@@ -27,8 +27,8 @@ cirrusHost = "cirrus20.yanzi.se"
 username = 'frank.shen@pinyuaninfo.com'
 password = 'Ft@Sugarcube99'
 
-# locationID = "879448"  # snf
-locationID = "252208"
+locationID = "879448"  # snf
+# locationID = "252208"
 # locationID = "74365"  # kerry
 
 # locationID = "229349"  # ft
@@ -53,16 +53,25 @@ sessionId = ''
 
 
 def onMessage(ws, message):
-    # global rt
+    global requestcount, HBFlag, sessionId
+    global rt
     response = json.loads(message)
     sendFromQue()
     # print('response')
-    global requestcount, HBFlag, sessionId
     # HBFlag = 0
+    print('..')
+    print(response["messageType"])
 
+    rt.stop()
+
+    rt.start()
     if response["messageType"] == "ErrorResponse":
         print('Error',response)
-        # sys.exit(-1)
+       # sys.exit(-1)
+    elif response["messageType"] == "PeriodicResponse":
+        HBFlag = 0
+        print("( periodic response rcvd )")
+        rt.start()
 
     elif response["messageType"] == "ServiceResponse":
         # pprint(response)
@@ -80,8 +89,9 @@ def onMessage(ws, message):
             if (response['responseCode']['name'] == 'success'):
                 # assetParemtID 
                 # print('\n')
-                assetList[response['unitAddress']['did']]=response['list'][0]['value']
-                sensorList[response['unitAddress']['did']][1] = response['list'][0]['value']
+                if 'value' in response['list'][0]:
+                    assetList[response['unitAddress']['did']] = response['list'][0]['value']
+                    sensorList[response['unitAddress']['did']][1] = response['list'][0]['value']
 
                 # print(assetList)
                 # print(response)
@@ -111,8 +121,8 @@ def onMessage(ws, message):
             list.to_csv('C:\\LOG\\'+locationID+'_name.csv',mode='w',encoding='utf-8')
             # sys.exit(-1)
     else:
-        
-        print('\n',response)
+        pass
+        # print('\n',response)
         
 
 
@@ -170,6 +180,11 @@ def setUnitLogicName(locationId, did, logicName):
 
     sendMessage(request_data)
 
+def showResult():
+    sys.exit(0)
+    
+    print(datetime.now()," 30 seconds to close job")
+    rt.stop()
 
 def onClose(ws):
     print("\n----Connection to Cloud closed----\n")
@@ -185,6 +200,21 @@ def sendFromQue():
     global msgQue
     if len(msgQue) != 0:
         ws.send(msgQue.pop())
+
+
+def sendPeriodicRequest():
+    global HBFlag
+    request = {"messageType": "PeriodicRequest",
+               "timeSent": int(time.time() * 1000)}
+    HBFlag += 1
+    if HBFlag >= 3:
+        print('(', HBFlag, 'periodic request sent )')
+        print('Should disconnect ')  # !!
+
+    else:
+        print('(', HBFlag, 'periodic request missed )')
+    sendMessage(request)
+
 
 
 def sendMessage(message):
@@ -238,6 +268,7 @@ def sendLoginRequest():
 if __name__ == "__main__":
     print(datetime.now(), " Connecting to ",
           cirrusHost, "with user ", username)
+    rt = RepeatedTimer(30, showResult)
     ws = websocket.WebSocketApp("wss://" + cirrusHost + "/cirrusAPI",
                                 on_message=onMessage, on_close=onClose, on_open=onOpen, keep_running=True)
     ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
