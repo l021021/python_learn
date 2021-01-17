@@ -6,18 +6,43 @@
 
 """
 
-import csv
-import json
+import os
 import ssl
+import json
 import sys
 import time
 from collections import deque
 from datetime import datetime, timedelta
 import pandas as pd
 from pprint import pprint
-from RT import RepeatedTimer
 
 import websocket
+from threading import Timer
+
+class RepeatedTimer(object):
+    def __init__(self, interval, function, *args, **kwargs):
+        self._timer = None
+        self.interval = interval
+        self.function = function
+        self.args = args
+        self.kwargs = kwargs
+        self.is_running = False
+        self.start()
+
+    def _run(self):
+        self.is_running = False
+        self.start()
+        self.function(*self.args, **self.kwargs)
+
+    def start(self):
+        if not self.is_running:
+            self._timer = Timer(self.interval, self._run)
+            self._timer.start()
+            self.is_running = True
+
+    def stop(self):
+        self._timer.cancel()
+        self.is_running = False
 
 
 # The cirrus host to connect to:
@@ -59,8 +84,7 @@ def onMessage(ws, message):
     sendFromQue()
     # print('response')
     # HBFlag = 0
-    print('..')
-    print(response["messageType"])
+    print('::',response["messageType"])
 
     rt.stop()
 
@@ -110,15 +134,10 @@ def onMessage(ws, message):
                 
                 if unit['unitAddress']['did'].find('UU')!=-1: #显示资产名称
                     setDisplayFlag(locationID, unit['unitAddress']['did'], 'true')
-                    print('XXX',unit['unitAddress']['did'])
+                    print('Display Asset ',unit['unitAddress']['did'])
             else:
-                print('noname', unit['unitAddress']['did']) #逻辑传感器 和网关
-        if len(sensorList)>0 :
-            list=pd.DataFrame.from_dict(sensorList,orient='index',columns=['NAME','ASSET'])
-            
-            list.sort_values(by='NAME',inplace = True)
-            pprint(list)        
-            list.to_csv('C:\\LOG\\'+locationID+'_name.csv',mode='w',encoding='utf-8')
+                print('skipping ', unit['unitAddress']['did']) #逻辑传感器 和网关
+       
             # sys.exit(-1)
     else:
         pass
@@ -181,10 +200,14 @@ def setUnitLogicName(locationId, did, logicName):
     sendMessage(request_data)
 
 def showResult():
-    sys.exit(0)
-    
-    print(datetime.now()," 30 seconds to close job")
-    rt.stop()
+    # print(datetime.now()," 30 seconds to close job")
+    if len(sensorList) > 0:
+        list = pd.DataFrame.from_dict(sensorList, orient='index', columns=['NAME', 'ASSET'])
+
+        list.sort_values(by='NAME', inplace=True)
+        pprint(list)
+        list.to_csv('C:\\LOG\\'+locationID+'_name.csv', mode='w', encoding='utf-8')
+    os._exit(0)
 
 def onClose(ws):
     print("\n----Connection to Cloud closed----\n")
