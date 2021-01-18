@@ -3,6 +3,8 @@
 """
 @author: Bruce
  首先根据assetparet 属性建立 euid和UUID的对应关系，然后对应到givenname，最后可以统一改名字
+ 顺便把资产显示的开关打开
+ 输出的文件在c:\LOG loation_name.csv
 
 """
 
@@ -59,11 +61,11 @@ locationID = "879448"  # snf
 # locationID = "229349"  # ft
 # locationID = "521209"  # wf
 # locationID = "879448"  # snf
-# locationID = "251092"  # yuanjin4
+locationID = "368307"  # yuanjin1
 # locationID = "834706"  # yuanjin2
 # locationID = "234190"  # yuanjin3
+# locationID = "251092"  # yuanjin4
 # locationID = "725728"  # yuanjin5
-# locationID = "368307"  # yuanjin1
 
 
 datalists = []
@@ -129,8 +131,9 @@ def onMessage(ws, message):
             # if 'UUID' in unit['unitAddress']['did'] and 'nameSetByUser' in unit:
             # pprint(unit)
             if 'nameSetByUser' in unit:
-                sensorList[unit['unitAddress']['did']]=[unit['nameSetByUser'],'']
-                GetUnitPropertyRequest(locationID, unit['unitAddress']['did'],'assetParentId')
+                sensorList[unit['unitAddress']['did']] = ['"'+unit['nameSetByUser']+'"', '']
+                if unit['unitAddress']['did'].find('EU') != -1:  # 对物理传感器获取资产名字
+                    GetUnitPropertyRequest(locationID, unit['unitAddress']['did'],'assetParentId')
                 
                 if unit['unitAddress']['did'].find('UU')!=-1: #显示资产名称
                     setDisplayFlag(locationID, unit['unitAddress']['did'], 'true')
@@ -205,6 +208,9 @@ def showResult():
         list = pd.DataFrame.from_dict(sensorList, orient='index', columns=['NAME', 'ASSET'])
 
         list.sort_values(by='NAME', inplace=True)
+        list.describe()
+        list=list[list.ASSET!='']
+        # list.remove( lambda x:x.ASSET='')
         pprint(list)
         list.to_csv('C:\\LOG\\'+locationID+'_name.csv', mode='w', encoding='utf-8')
     os._exit(0)
