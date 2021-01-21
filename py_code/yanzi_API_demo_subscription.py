@@ -33,7 +33,7 @@ password = 'Ft@Sugarcube99'
 
 # locationID = "229349"  # ft
 # locationID = "521209"  # wf
-locationID = "395065"  # sunon 6
+locationID = "503370" # sunon 6
 
 startstr = '2020-11-18-12-00-00'
 endstr = '2020-11-20-08-00-00'

@@ -61,7 +61,7 @@ locationID = "879448"  # snf
 # locationID = "229349"  # ft
 # locationID = "521209"  # wf
 # locationID = "879448"  # snf
-locationID = "368307"  # yuanjin1
+# locationID = "368307"  # yuanjin1
 # locationID = "834706"  # yuanjin2
 # locationID = "234190"  # yuanjin3
 # locationID = "251092"  # yuanjin4
@@ -119,7 +119,9 @@ def onMessage(ws, message):
                 # print('\n')
                 if 'value' in response['list'][0]:
                     assetList[response['unitAddress']['did']] = response['list'][0]['value']
-                    sensorList[response['unitAddress']['did']][1] = response['list'][0]['value']
+                    sensorList[response['unitAddress']['did']][1] = response['list'][0]['value'] #传感器名字
+                    # sensorList[response['unitAddress']['did']][2] = response['list'][0]['value'] #asset名字
+
 
                 # print(assetList)
                 # print(response)
@@ -133,7 +135,7 @@ def onMessage(ws, message):
             # if 'UUID' in unit['unitAddress']['did'] and 'nameSetByUser' in unit:
             # pprint(unit)
             if 'nameSetByUser' in unit:
-                sensorList[unit['unitAddress']['did']] = ['"'+unit['nameSetByUser']+'"', '']
+                sensorList[unit['unitAddress']['did']] = ['"'+unit['nameSetByUser']+'"', '',''] #分别是传感器名字,资产名字,对应的UUID
                 if unit['unitAddress']['did'].find('EU') != -1:  # 对物理传感器获取资产名字
                     GetUnitPropertyRequest(locationID, unit['unitAddress']['did'],'assetParentId')
                     
@@ -209,7 +211,14 @@ def setUnitLogicName(locationId, did, logicName):
 def showResult():
     # print(datetime.now()," 30 seconds to close job")
     if len(sensorList) > 0:
-        list = pd.DataFrame.from_dict(sensorList, orient='index', columns=['NAME', 'ASSET'])
+        for k,v in sensorList.items():
+            if k.find('EU')!=-1:
+                # print(k,'--',v,end='----\n')
+                print('key',k,'0:',v[0],'1:',v[1],'2:',v[2])
+                if v[1] in sensorList:
+                    v[2]=sensorList[v[1]][0]
+                # print(v[2], 'xxx', sensorList[v[1]][1])
+        list = pd.DataFrame.from_dict(sensorList, orient='index', columns=['NAME', 'ASSET','NAME1'])
 
         list.sort_values(by='NAME', inplace=True)
         list.describe()

@@ -29,15 +29,16 @@ password = 'Ft@Sugarcube99'
 # locationID = "879448"  # snf
 # locationID = "655623"
 # locationID = "74365"  # kerry
+locationID = "503370"  # wanke
 
 # locationID = "229349"  # ft
 # locationID = "521209"  # wf
 # locationID = "879448"  # snf
 # locationID = "368307"  # yuanjin1
-# locationID = "834706"  # yuanjin2
-locationID = "234190"  # yuanjin3
-locationID = "251092"  # yuanjin4
-locationID = "725728"  # yuanjin5
+# # locationID = "834706"  # yuanjin2
+# locationID = "234190"  # yuanjin3
+# locationID = "251092"  # yuanjin4
+# locationID = "725728"  # yuanjin5
 
 
 datalists = []

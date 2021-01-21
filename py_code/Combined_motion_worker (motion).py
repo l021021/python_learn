@@ -46,9 +46,11 @@ locationID = "834706"  # yuanjin2
 locationID = "234190"  # yuanjin3
 locationID = "251092"  # yuanjin4
 locationID = "725728"  # yuanjin5
-startstr = '2021-01-12-08-00-00'
-endstr = '2021-01-14-08-00-00'
-datatype = 'UUID'  # Motion | UUID  #选择要采的数据类型
+locationID = "503370"  # 万科
+
+startstr = '2021-01-19-17-00-00'
+endstr = '2021-01-19-18-00-00'
+datatype = 'Motion'  # Motion | UUID  #选择要采的数据类型
 
 
 
@@ -88,12 +90,17 @@ def calOccupancy():
 
     # 建立时间轴
     # 根据数据生成目标时间格子
+    
+    
+    #取尽量大的事件间隔，保证数据没有空洞
     min = startdt if startdt < data['TIME'].min() else data['TIME'].min()  
     max = enddt if enddt > data['TIME'].max() else data['TIME'].max()  
-    # min = data['TIME'].min()
-    # max = data['TIME'].min()
-    # Gridlist = pd.date_range(min.replace(microsecond=0, second=0, minute=min.minute//5*5), max+pd.DateOffset(minutes=5), freq='5T')
-    # Gridlist = pd.date_range(min, max, freq='5T')
+    
+    # ！！！ 如果有传感器长期掉线，上面的计算会导致起始日期很长！！！则采用下面的方式
+    # min = startdt 
+    # max = enddt 
+    
+    
     Gridlist = pd.date_range(min.replace(microsecond=0, second=0, minute=min.minute//5*5), max+pd.DateOffset(minutes=5), freq='5T')
 
     Gridlist = pd.DataFrame(Gridlist, columns=['TIME'])
@@ -105,11 +112,15 @@ def calOccupancy():
 
     # 每个ID循环处理
     for id in IDSet:
+        
         print('\nProcessing ', id)
         data_per_ID = data[data.ID == id]
         data1 = data_per_ID.values.tolist()
+        
         print('raw records:', len(data1))
-
+        if len(data1) < 2: 
+            print('dead sensor, skiped ')
+            continue
         # 删除MS数据
         for i in range(1, len(data1)-1):
             if data1[i][1] == 'missingInput':  # 检查event是否为ms
@@ -287,14 +298,14 @@ def onMessage(ws, message):
             for unit in unitslist:
                 if 'UUID' in unit['unitAddress']['did']:
                     sendGetSamplesRequest(
-                        unit['unitAddress']['did'], locationID, startdt, numberOfSamplesBeforeStart=1)
+                        unit['unitAddress']['did'], locationID, startdt, numberOfSamplesBeforeStart=0)
                     sendGetSamplesRequest(
                         unit['unitAddress']['did'], locationID, startdt, enddt)
         elif datatype=='Motion':
             for unit in unitslist:
                 if 'Motion' in unit['unitAddress']['did']:
                     sendGetSamplesRequest(
-                        unit['unitAddress']['did'], locationID, startdt, numberOfSamplesBeforeStart=1)
+                        unit['unitAddress']['did'], locationID, startdt, numberOfSamplesBeforeStart=0)
                     sendGetSamplesRequest(
                         unit['unitAddress']['did'], locationID, startdt, enddt)
            
