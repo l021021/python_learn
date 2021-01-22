@@ -64,9 +64,9 @@ locationID = "879448"  # snf
 # locationID = "368307"  # yuanjin1
 # locationID = "834706"  # yuanjin2
 # locationID = "234190"  # yuanjin3
-# locationID = "251092"  # yuanjin4
-# locationID = "725728"  # yuanjin5
-locationID = "503370"  # wanke
+locationID = "251092"  # yuanjin4
+locationID = "725728"  # yuanjin5
+# locationID = "503370"  # wanke
 
 
 

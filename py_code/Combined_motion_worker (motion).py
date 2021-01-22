@@ -46,11 +46,11 @@ locationID = "834706"  # yuanjin2
 locationID = "234190"  # yuanjin3
 locationID = "251092"  # yuanjin4
 locationID = "725728"  # yuanjin5
-locationID = "503370"  # 万科
+# locationID = "503370"  # 万科
 
-startstr = '2021-01-19-17-00-00'
-endstr = '2021-01-19-18-00-00'
-datatype = 'Motion'  # Motion | UUID  #选择要采的数据类型
+startstr = '2021-01-18-09-00-00'
+endstr = '2021-01-21-17-59-59'
+datatype = 'UUID'  # Motion | UUID  #选择要采的数据类型
 
 
 
@@ -298,14 +298,14 @@ def onMessage(ws, message):
             for unit in unitslist:
                 if 'UUID' in unit['unitAddress']['did']:
                     sendGetSamplesRequest(
-                        unit['unitAddress']['did'], locationID, startdt, numberOfSamplesBeforeStart=0)
+                        unit['unitAddress']['did'], locationID, startdt, numberOfSamplesBeforeStart=1)  #注意修改
                     sendGetSamplesRequest(
                         unit['unitAddress']['did'], locationID, startdt, enddt)
         elif datatype=='Motion':
             for unit in unitslist:
                 if 'Motion' in unit['unitAddress']['did']:
                     sendGetSamplesRequest(
-                        unit['unitAddress']['did'], locationID, startdt, numberOfSamplesBeforeStart=0)
+                        unit['unitAddress']['did'], locationID, startdt, numberOfSamplesBeforeStart=1)
                     sendGetSamplesRequest(
                         unit['unitAddress']['did'], locationID, startdt, enddt)
            

@@ -4,7 +4,9 @@
 @author: Bruce
 
 利用本地json文件保存所有的电量,每次先读取这个文件,然后每次更新都吧更新信息加到
-字典(key是ID)的数组中
+字典(key是ID_LOCATION)的数组中
+
+对于小于20的传感器,会加上.99,因此在文档中查找 .99 ,就可以找到缺电的传感器
 
 """
 
@@ -136,19 +138,18 @@ def onMessage(ws, message):
                 #!! battery info   
             elif response['subscriptionType']['name'] == 'battery':
                 print(response['list'][0]['dataSourceAddress']['did'])
-                print(response['list'][0]['list'][0]['value'])
-            # print(response['list'][0]['list'][0]['value'],'\n ')
-            # print(response['list'][0]['list'][0]['assetState']['name'])
-            # for 
+                # print(response['list'][0]['list'][0]['value'])
                 print((response['list'][0]['list'][0]['value'] if 'value' in response['list'][0]['list'][0] else \
                 response['list'][0]['list'][0]['assetState']['name']))
                 print(response['list'][0]['list'][0]['percentFull'])
-                if response['list'][0]['dataSourceAddress']['did'] in batterylog:
-                    batterylog[response['list'][0]['dataSourceAddress']['did']].append([response['list'][0]['list'][0]['percentFull'],\
+                if int(response['list'][0]['list'][0]['percentFull'])<=20 :
+                    response['list'][0]['list'][0]['percentFull'] = response['list'][0]['list'][0]['percentFull']+.99
+                if response['list'][0]['dataSourceAddress']['did']+'_'+response['list'][0]['dataSourceAddress']['locationId'] in batterylog:
+                    batterylog[response['list'][0]['dataSourceAddress']['did']+'_'+response['list'][0]['dataSourceAddress']['locationId']].append([response['list'][0]['list'][0]['percentFull'],
                         response['list'][0]['list'][0]['sampleTime']])
                 else:
-                    batterylog[response['list'][0]['dataSourceAddress']['did']]=[]
-                    batterylog[response['list'][0]['dataSourceAddress']['did']].append([response['list'][0]['list'][0]['percentFull'],
+                    batterylog[response['list'][0]['dataSourceAddress']['did']+'_'+response['list'][0]['dataSourceAddress']['locationId']] = []
+                    batterylog[response['list'][0]['dataSourceAddress']['did']+'_'+response['list'][0]['dataSourceAddress']['locationId']].append([response['list'][0]['list'][0]['percentFull'],
                                                                                         response['list'][0]['list'][0]['sampleTime']])
                 writetofile()
       
