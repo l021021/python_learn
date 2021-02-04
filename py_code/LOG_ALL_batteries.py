@@ -110,7 +110,7 @@ def onMessage(ws, message):
         if (response['responseCode']['name'] == 'success'):
             list1=response['list']
             for locationID in list1:
-                print(locationID['locationAddress']['locationId'])
+                # print(locationID['locationAddress']['locationId'])
                 # response['list'][0]['locationAddress']
                 sendSubscribeRequest(locationID['locationAddress']['locationId'], ['battery'])
         
@@ -120,10 +120,10 @@ def onMessage(ws, message):
         rt.start()
 
     elif response["messageType"] == "SubscribeData":
-        print('\n-------',end='--')
+        # print('\n-',end='-')
         # for list,*other,subscriptionType,timesent in response:
-        print(response['subscriptionType']['name'],end='--')
-        print(response['list'][0]['list'][0]['resourceType'],end='--')
+        # print(response['subscriptionType']['name'],end='-')
+        # print(response['list'][0]['list'][0]['resourceType'],end='--')
 
         try:
             if response['subscriptionType']['name'] in ['data','assetData']:
@@ -137,12 +137,18 @@ def onMessage(ws, message):
                 
                 #!! battery info   
             elif response['subscriptionType']['name'] == 'battery':
-                print(response['list'][0]['dataSourceAddress']['did'])
-                # print(response['list'][0]['list'][0]['value'])
-                print((response['list'][0]['list'][0]['value'] if 'value' in response['list'][0]['list'][0] else \
-                response['list'][0]['list'][0]['assetState']['name']))
-                print(response['list'][0]['list'][0]['percentFull'])
+                # print("B",end='.')               
+                # print(response['list'][0]['dataSourceAddress']['did'])
+                # # print(response['list'][0]['list'][0]['value'])
+                # print((response['list'][0]['list'][0]['value'] if 'value' in response['list'][0]['list'][0] else \
+                # response['list'][0]['list'][0]['assetState']['name']))
+                # print(response['list'][0]['list'][0]['percentFull'])
                 if int(response['list'][0]['list'][0]['percentFull'])<=20 :
+                    print('\n',response['list'][0]['dataSourceAddress']['did']+'_'+response['list'][0]['dataSourceAddress']['locationId'])
+                    # print(response['list'][0]['list'][0]['value'])
+                    # print((response['list'][0]['list'][0]['value'] if 'value' in response['list'][0]['list'][0] else
+                    #     response['list'][0]['list'][0]['assetState']['name']))
+                    print(response['list'][0]['list'][0]['percentFull'])
                     response['list'][0]['list'][0]['percentFull'] = response['list'][0]['list'][0]['percentFull']+.99
                 if response['list'][0]['dataSourceAddress']['did']+'_'+response['list'][0]['dataSourceAddress']['locationId'] in batterylog:
                     batterylog[response['list'][0]['dataSourceAddress']['did']+'_'+response['list'][0]['dataSourceAddress']['locationId']].append([response['list'][0]['list'][0]['percentFull'],
@@ -285,7 +291,7 @@ if __name__ == "__main__":
     print(datetime.now(), " Connecting to ",
           cirrusHost, "with user ", username)
     readLogfile()
-    print(batterylog)
+    # print(batterylog)
     ws = websocket.WebSocketApp("wss://" + cirrusHost + "/cirrusAPI",
                                 on_message=onMessage, on_close=onClose, on_open=onOpen, keep_running=True)
     ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
