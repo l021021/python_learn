@@ -56,20 +56,21 @@ cirrusHost = "cirrus20.yanzi.se"
 username = 'frank.shen@pinyuaninfo.com'
 password = 'Ft@Sugarcube99'
 
-locationID = "879448"  # snf
+# locationID = "879448"  # snf
 # locationID = "252208"
 # locationID = "74365"  # kerry
+locationID = "797296"  # nv
 
 # locationID = "229349"  # ft
 # locationID = "521209"  # wf
 # locationID = "879448"  # snf
 # locationID = "368307"  # yuanjin1
-# locationID = "834706"  # yuanjin2
-# locationID = "234190"  # yuanjin3
+locationID = "834706"  # yuanjin2
+locationID = "234190"  # yuanjin3
 locationID = "251092"  # yuanjin4
 locationID = "725728"  # yuanjin5
 # locationID = "503370"  # wanke
-
+timeToWait=180 #time to wait for motion records 
 
 
 datalists = []
@@ -80,11 +81,13 @@ HBFlag = 0
 msgQue = deque()
 count = 0
 sessionId = ''
+activeSensorCount=0
 
 
 
 def onMessage(ws, message):
     global requestcount, HBFlag, sessionId
+    global activeSensorCount
     global rt
     response = json.loads(message)
     sendFromQue()
@@ -92,9 +95,9 @@ def onMessage(ws, message):
     # HBFlag = 0
     # print('::',response["messageType"])
 
-    rt.stop()
+    # rt.stop()
 
-    rt.start()
+    # rt.start()
     if response["messageType"] == "ErrorResponse":
         print('Error',response)
        # sys.exit(-1)
@@ -112,22 +115,19 @@ def onMessage(ws, message):
         if (response['responseCode']['name'] == 'success'):
             sessionId = response['sessionId']
             sendGetUnitsRequest(locationID)
-            sendSubscribeRequest(locationID,'occupancy')
         else:
             print(response)
             sys.exit(-1)
     elif response["messageType"] == "GetUnitPropertyResponse":
-            if (response['responseCode']['name'] == 'success'):
-                # assetParentID 
-                # print('\n')
-                if 'value' in response['list'][0]:
-                    assetList[response['unitAddress']['did']] = response['list'][0]['value']
-                    sensorList[response['unitAddress']['did']][1] = response['list'][0]['value'] #传感器名字
-                    # sensorList[response['unitAddress']['did']][2] = response['list'][0]['value'] #asset名字
+        if (response['responseCode']['name'] == 'success'):
+            # 获取assetParentID 
+            # print('\n')
+            if 'value' in response['list'][0]:
+                assetList[response['unitAddress']['did']] = response['list'][0]['value']
+                sensorList[response['unitAddress']['did']][1] = response['list'][0]['value'] #传感器名字
+                # sensorList[response['unitAddress']['did']][2] = response['list'][0]['value'] #asset名字
+        
 
-
-                # print(assetList)
-                # print(response)
     elif response["messageType"] == "SubscribeData":
             # print('\n-',end='-')
             # for list,*other,subscriptionType,timesent in response:
@@ -136,63 +136,19 @@ def onMessage(ws, message):
 
             try:
                 if response['subscriptionType']['name'] in ['data','assetData']:
-                    print(response['list'][0]['dataSourceAddress']['did'])
-                    print(response['list'][0]['dataSourceAddress']['variableName']['name'])
-                    # print(response['list'][0]['list'][0]['value'],'\n ')
-                    # print(response['list'][0]['list'][0]['assetState']['name'])
-                    # for 
-                    print((response['list'][0]['list'][0]['value'] if 'value' in response['list'][0]['list'][0] else \
-                        response['list'][0]['list'][0]['assetState']['name']))
+                    if (response['list'][0]['dataSourceAddress']['did']).find('otion') != -1 and (response['list'][0]['dataSourceAddress']['variableName']['name']).find('motion')!=-1 :
+                        activeSensorCount+=1
+                        print(activeSensorCount,end='>')
+                        sensorList[response['list'][0]['dataSourceAddress']['did'][:22]][3] = 'True'
+                    # print(response['list'][0]['dataSourceAddress']['did'])
+                    # print(response['list'][0]['dataSourceAddress']['variableName']['name'])
+                    
+                    # print((response['list'][0]['list'][0]['value'] if 'value' in response['list'][0]['list'][0] else \
+                    #     response['list'][0]['list'][0]['assetState']['name']))
                     
                     #!! battery info   
-                elif response['subscriptionType']['name'] == 'battery':
-                    # print("B",end='.')               
-                    # print(response['list'][0]['dataSourceAddress']['did'])
-                    # # print(response['list'][0]['list'][0]['value'])
-                    # print((response['list'][0]['list'][0]['value'] if 'value' in response['list'][0]['list'][0] else \
-                    # response['list'][0]['list'][0]['assetState']['name']))
-                    # print(response['list'][0]['list'][0]['percentFull'])
-                    if int(response['list'][0]['list'][0]['percentFull'])<=20 :
-                        print('\n',response['list'][0]['dataSourceAddress']['did']+'_'+response['list'][0]['dataSourceAddress']['locationId'])
-                        # print(response['list'][0]['list'][0]['value'])
-                        # print((response['list'][0]['list'][0]['value'] if 'value' in response['list'][0]['list'][0] else
-                        #     response['list'][0]['list'][0]['assetState']['name']))
-                        print(response['list'][0]['list'][0]['percentFull'])
-                        response['list'][0]['list'][0]['percentFull'] = response['list'][0]['list'][0]['percentFull']+.99
-                    if response['list'][0]['dataSourceAddress']['did']+'_'+response['list'][0]['dataSourceAddress']['locationId'] in batterylog:
-                        batterylog[response['list'][0]['dataSourceAddress']['did']+'_'+response['list'][0]['dataSourceAddress']['locationId']].append([response['list'][0]['list'][0]['percentFull'],
-                            response['list'][0]['list'][0]['sampleTime']])
-                    else:
-                        batterylog[response['list'][0]['dataSourceAddress']['did']+'_'+response['list'][0]['dataSourceAddress']['locationId']] = []
-                        batterylog[response['list'][0]['dataSourceAddress']['did']+'_'+response['list'][0]['dataSourceAddress']['locationId']].append([response['list'][0]['list'][0]['percentFull'],
-                                                                                            response['list'][0]['list'][0]['sampleTime']])
-                    writetofile()
-        
-                elif response['subscriptionType']['name'] =='occupancySlots':
-                    print(response['list'][0]['dataSourceAddress']['did'])
-                    print(response['list'][0]['list'][0]['sample']['assetState']['name'])
-                elif response['subscriptionType']['name'] =='lifecycle':
-                    print(response['list'][0]['dataSourceAddress']['did'])
-                    print(response['list'][0]['list'][0]['deviceUpState']['name'])
-                elif response['subscriptionType']['name'] =='sensorSlots':
-                    print(response['list'][0]['dataSourceAddress']['did'])
-                    print(response['list'][0]['list'][0]['aggregateValue'])
-                elif response['subscriptionType']['name'] == 'sensorData':
-                    print(response['list'][0]['dataSourceAddress']['did'])
-                    print(response['list'][0]['dataSourceAddress']['variableName']['name'])
-                    print((response['list'][0]['list'][0]['value'] if 'value' in response['list'][0]['list'][0] else \
-                        response['list'][0]['list'][0]['assetState']['name']))
-                elif response['subscriptionType']['name'] =='assetSlots':
-                    print(response['list'][0]['dataSourceAddress']['did'])
-                    print(response['list'][0]['list'][0]['aggregateValue'])
-                elif response['subscriptionType']['name'] =='occupancy':
-                    print(response['list'][0]['dataSourceAddress']['did'])
-                    print(response['list'][0]['list'][0]['assetState']['name'])
-                else:
-
-                    pprint(response)
-
-                    # print(response['list'][0]['dataSourceAddress']['variableName']['name'],response['list'][0]['list'][0]['value'],'\n ')
+                
+                                   # print(response['list'][0]['dataSourceAddress']['variableName']['name'],response['list'][0]['list'][0]['value'],'\n ')
                 
             except :
                 print('!!!!!!!!!!!!!!!!')
@@ -200,26 +156,25 @@ def onMessage(ws, message):
     
     
     elif response["messageType"] == "GetUnitsResponse":
+        
         print("Requesting for records:")
         unitslist = response['list']
         for unit in unitslist:
             # if 'UUID' in unit['unitAddress']['did'] and 'nameSetByUser' in unit:
             # pprint(unit)
             if 'nameSetByUser' in unit:
-                sensorList[unit['unitAddress']['did']] = ['"'+unit['nameSetByUser']+'"', '',''] #分别是传感器名字,资产名字,对应的UUID
+                sensorList[unit['unitAddress']['did']] = ['"'+unit['nameSetByUser']+'"', '','',''] #分别是传感器名字,资产名字,对应的UUID
                 if unit['unitAddress']['did'].find('EU') != -1:  # 对物理传感器获取资产名字
                     GetUnitPropertyRequest(locationID, unit['unitAddress']['did'],'assetParentId')
                     
                     # 有个问题，TODO 需要优先取ASSET的名字而不是传感器的
      
-            else:
-                print('skipping ', unit['unitAddress']['did']) #逻辑传感器 和网关
-       
-            # sys.exit(-1)
-    else:
-        pass
-        # print('\n',response)
-        
+        print(datetime.now(), " Timer restarted ! ")
+        rt.stop()
+        rt.start()
+        time.sleep(5)
+        sendSubscribeRequest(locationID, ['data'])
+   
 
 
 def GetUnitPropertyRequest(locationId, did, propertyName):
@@ -282,26 +237,34 @@ def showResult():
         for k,v in sensorList.items():
             if k.find('EU')!=-1:
                 # print(k,'--',v,end='----\n')
-                print('key',k,'0:',v[0],'1:',v[1],'2:',v[2])
-                if v[1] in sensorList:
+                # print('key',k,'0:',v[0],'1:',v[1],'2:',v[2],'3:',v[2])
+                if v[1] in sensorList:   #根据资产的名字，来生成传感器的名字
                     v[2]=sensorList[v[1]][0]
                 # print(v[2], 'xxx', sensorList[v[1]][1])
-        list = pd.DataFrame.from_dict(sensorList, orient='index', columns=['NAME', 'ASSET','NAME1'])
+        list = pd.DataFrame.from_dict(sensorList, orient='index', columns=['NAME', 'ASSET','NAME1','STATUS'])
 
         list.sort_values(by='NAME', inplace=True)
-        list.describe()
+        # list.describe()
         list=list[list.ASSET!='']
+        # print('total sensors',list.count)
+        list=list[list.STATUS!='True']
+        
         # list.remove( lambda x:x.ASSET='')
+        print("\n\nAbnormal Sensors or Mesh")
         pprint(list)
-        list.to_csv('C:\\LOG\\'+locationID+'_name.csv', mode='w', encoding='utf-8')
-    os._exit(0)
+        print(datetime.now(), " Finished ! ")
+        list.to_csv('C:\\LOG\\'+locationID+'_BAD.csv', mode='w', encoding='utf-8')
+        if __name__ == "__main__":
+            os._exit(0)
+        sys.exit()
+        return
 
 def onClose(ws):
     print("\n----Connection to Cloud closed----\n")
 
 
 def onOpen(ws):
-    print("Sending service request")
+    # print("Sending service request")
     sendServiceRequest()
     # periodTimer(1, sendPeriodicRequest())
 
@@ -379,7 +342,7 @@ def sendSubscribeRequest(location_id, datatype):
 def sendGetUnitsRequest(locationID):
     request = {"messageType": 'GetUnitsRequest', "timeSent": int(time.time(
     ) * 1000), "locationAddress": {"resourceType": 'LocationAddress', "locationId": locationID}}
-    print('sending getunits request for ' + locationID)
+    # print('sending getunits request for ' + locationID)
     sendMessagetoQue(request)
 
 
@@ -393,11 +356,19 @@ def sendLoginRequest():
                    "username": username, "password": password}
     sendMessagetoQue(request)
 
-
-if __name__ == "__main__":
-    print(datetime.now(), " Connecting to ",
-          cirrusHost, "with user ", username)
-    rt = RepeatedTimer(120, showResult) #5分钟内没有数据，则视为坏
+def checkSensor(location_id=''):
+    #可以带参数进来,否则就默认是文件头的location
+    print("Wait 3 Minutes before the abnormal motion sensors be detected")
+    if location_id!='':
+        global locationID
+        locationID=location_id
+    global rt,ws
+    rt = RepeatedTimer(timeToWait, showResult) #5分钟内没有数据，则视为坏
     ws = websocket.WebSocketApp("wss://" + cirrusHost + "/cirrusAPI",
                                 on_message=onMessage, on_close=onClose, on_open=onOpen, keep_running=True)
     ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
+
+if __name__ == "__main__":
+    checkSensor()
+    os._exit(0)
+

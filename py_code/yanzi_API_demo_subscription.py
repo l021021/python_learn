@@ -105,9 +105,9 @@ def onMessage(ws, message):
         if (response['responseCode']['name'] == 'success'):
             sessionId = response['sessionId']
             # sendGetUnitsRequest(locationID)
-            sendSubscribeRequest(locationID,['lifecycle']) #
-            #        sendSubscribeRequest(locationID,['lifecycle','config','data','assetSlots','occupancy','battery',\
-            #                                  'sensorData','sensorSlots','assetData','occupancySlots']) #
+            # sendSubscribeRequest(locationID,['lifecycle']) #
+            sendSubscribeRequest(locationID,['lifecycle','config','data','assetSlots','occupancy','battery',\
+                                        'sensorData','sensorSlots','assetData','occupancySlots']) #
             sendPeriodicRequest()
         else:
             print(response)
