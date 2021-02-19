@@ -254,13 +254,19 @@ def showResult():
         pprint(list)
         print(datetime.now(), " Finished ! ")
         list.to_csv('C:\\LOG\\'+locationID+'_BAD.csv', mode='w', encoding='utf-8')
-        if __name__ == "__main__":
-            os._exit(0)
-        sys.exit()
-        return
+        # if __name__ == "__main__":
+        #     os._exit(0)
+        # sys.exit()
+        ws.close()
+        
 
 def onClose(ws):
     print("\n----Connection to Cloud closed----\n")
+    rt.stop()
+    # try:
+    #     sys.exit(1)
+    # finally:
+    #     pass
 
 
 def onOpen(ws):
