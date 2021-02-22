@@ -138,7 +138,7 @@ def onMessage(ws, message):
                 if response['subscriptionType']['name'] in ['data','assetData']:
                     if (response['list'][0]['dataSourceAddress']['did']).find('otion') != -1 and (response['list'][0]['dataSourceAddress']['variableName']['name']).find('motion')!=-1 :
                         activeSensorCount+=1
-                        print(activeSensorCount,end='>')
+                        # print(activeSensorCount,end='>')
                         sensorList[response['list'][0]['dataSourceAddress']['did'][:22]][3] = 'True'
                     # print(response['list'][0]['dataSourceAddress']['did'])
                     # print(response['list'][0]['dataSourceAddress']['variableName']['name'])
@@ -157,7 +157,7 @@ def onMessage(ws, message):
     
     elif response["messageType"] == "GetUnitsResponse":
         
-        print("Requesting for records:")
+        print("Requesting for records:\n")
         unitslist = response['list']
         for unit in unitslist:
             # if 'UUID' in unit['unitAddress']['did'] and 'nameSetByUser' in unit:
@@ -169,7 +169,7 @@ def onMessage(ws, message):
                     
                     # 有个问题，TODO 需要优先取ASSET的名字而不是传感器的
      
-        print(datetime.now(), " Timer restarted ! ")
+        # print(datetime.now(), " Timer restarted ! ")
         rt.stop()
         rt.start()
         time.sleep(5)
@@ -250,9 +250,9 @@ def showResult():
         list=list[list.STATUS!='True']
         
         # list.remove( lambda x:x.ASSET='')
-        print("\n\nAbnormal Sensors or Mesh")
+        print("\nAbnormal Sensors or Mesh in ",locationID)
         pprint(list)
-        print(datetime.now(), " Finished ! ")
+        # print(datetime.now(), " Finished ! ")
         list.to_csv('C:\\LOG\\'+locationID+'_BAD.csv', mode='w', encoding='utf-8')
         # if __name__ == "__main__":
         #     os._exit(0)
@@ -261,7 +261,7 @@ def showResult():
         
 
 def onClose(ws):
-    print("\n----Connection to Cloud closed----\n")
+    # print("\n----Connection to Cloud closed----\n")
     rt.stop()
     # try:
     #     sys.exit(1)
