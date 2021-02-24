@@ -157,7 +157,7 @@ def onMessage(ws, message):
     
     elif response["messageType"] == "GetUnitsResponse":
         
-        print("Requesting for records:\n")
+        # print("Requesting for records:\n")
         unitslist = response['list']
         for unit in unitslist:
             # if 'UUID' in unit['unitAddress']['did'] and 'nameSetByUser' in unit:
@@ -257,7 +257,7 @@ def showResult():
         # if __name__ == "__main__":
         #     os._exit(0)
         # sys.exit()
-        ws.close()
+    ws.close()
         
 
 def onClose(ws):

@@ -172,6 +172,8 @@ def GetUnitPropertyRequest(locationId, did, propertyName):
 # def onError(ws, error):
 #     print("Error", error)
 
+
+#TODO
 def setDisplayFlag(locationId, did, displayFlag):
     request_data = {
         "messageType": "SetCustomPropertyRequest",
@@ -226,10 +228,12 @@ def showResult():
         # list.remove( lambda x:x.ASSET='')
         pprint(list)
         list.to_csv('C:\\LOG\\'+locationID+'_name.csv', mode='w', encoding='utf-8')
-    os._exit(0)
+    ws.close()
 
 def onClose(ws):
-    print("\n----Connection to Cloud closed----\n")
+    # print("\n----Connection to Cloud closed----\n")
+    rt.stop()
+
 
 
 def onOpen(ws):
@@ -307,10 +311,19 @@ def sendLoginRequest():
     sendMessagetoQue(request)
 
 
-if __name__ == "__main__":
+def get_sensor_asset_binding(location_id=''):
+    if location_id!='':
+        global locationID
+        locationID=location_id
+    global rt,ws
+        
     print(datetime.now(), " Connecting to ",
           cirrusHost, "with user ", username)
     rt = RepeatedTimer(30, showResult)
     ws = websocket.WebSocketApp("wss://" + cirrusHost + "/cirrusAPI",
                                 on_message=onMessage, on_close=onClose, on_open=onOpen, keep_running=True)
     ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
+
+if __name__ == "__main__":
+    get_sensor_asset_binding()
+    os._exit(0)
