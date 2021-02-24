@@ -5,8 +5,8 @@ from check_sensor_healthy import checkSensor
 from get_sensor_asset_binding import get_sensor_asset_binding
 
 
-locations = [ "368307" ,"834706"  ,"234190"  ,"251092" ,"725728"  ]
-# locations = [ "800424" ,"155697" ] #teslian
+# locations = [ "368307" ,"834706"  ,"234190"  ,"251092" ,"725728"  ]
+locations = [ "800424" ,"155697" ] #teslian
 # locations = [ "402837" ,"952675 "  ,"268429"  ,"732449" ,"328916"  ] #huaian
 # locations = [ "897737" ,"521209"  ] #wafer
 

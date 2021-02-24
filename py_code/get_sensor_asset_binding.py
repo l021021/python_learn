@@ -2,7 +2,8 @@
 # coding=utf-8
 """
 @author: Bruce
- 首先根据assetparet 属性建立 euid和UUID的对应关系，然后对应到givenname，最后可以统一改名字
+ 首先根据assetparet 属性建立 euid和UUID的对应关系，
+ 然后根据asset的givenname，写入传感器的givenname/logical name
  顺便把资产显示的开关打开
  输出的文件在c:\LOG loation_name.csv
 
@@ -67,6 +68,7 @@ locationID = "879448"  # snf
 locationID = "251092"  # yuanjin4
 locationID = "725728"  # yuanjin5
 # locationID = "503370"  # wanke
+locationID = "942787"  # test1
 
 
 
@@ -86,7 +88,7 @@ def onMessage(ws, message):
     global rt
     response = json.loads(message)
     sendFromQue()
-    # print('response')
+    # print(response)
     # HBFlag = 0
     # print('::',response["messageType"])
 
@@ -113,20 +115,18 @@ def onMessage(ws, message):
         else:
             print(response)
             sys.exit(-1)
-    elif response["messageType"] == "GetUnitPropertyResponse":
+    
+    #通过EUID的关联取得对应的asset
+    elif response["messageType"] == "GetUnitPropertyResponse": 
             if (response['responseCode']['name'] == 'success'):
                 # assetParentID 
                 # print('\n')
                 if 'value' in response['list'][0]:
+                    #把配置时自定的Asset名字写到asset和对应的传感器,并配置到live
                     assetList[response['unitAddress']['did']] = response['list'][0]['value']
-                    sensorList[response['unitAddress']['did']][1] = response['list'][0]['value'] #传感器名字
+                    sensorList[response['unitAddress']['did']][1] = response['list'][0]['value']
+                    setUnitLogicName(locationID, response['unitAddress']['did'], sensorList[response['list'][0]['value']][0])  # 传感器名字
                     # sensorList[response['unitAddress']['did']][2] = response['list'][0]['value'] #asset名字
-
-
-                # print(assetList)
-                # print(response)
- 
- 
     
     elif response["messageType"] == "GetUnitsResponse":
         print("Requesting for records:")
@@ -223,7 +223,7 @@ def showResult():
         list = pd.DataFrame.from_dict(sensorList, orient='index', columns=['NAME', 'ASSET','NAME1'])
 
         list.sort_values(by='NAME', inplace=True)
-        list.describe()
+        # list.describe()
         list=list[list.ASSET!='']
         # list.remove( lambda x:x.ASSET='')
         pprint(list)
