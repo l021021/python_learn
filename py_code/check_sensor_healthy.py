@@ -108,8 +108,7 @@ def onMessage(ws, message):
 
     elif response["messageType"] == "ServiceResponse":
         # pprint(response)
-        print("Got ServiceResponse, sending login request")
-        # We got a service response, let’s try to login:
+        print("Login to: ",locationID)
         sendLoginRequest()
     elif response["messageType"] == "LoginResponse":
         if (response['responseCode']['name'] == 'success'):
@@ -263,11 +262,7 @@ def showResult():
 def onClose(ws):
     # print("\n----Connection to Cloud closed----\n")
     rt.stop()
-    # try:
-    #     sys.exit(1)
-    # finally:
-    #     pass
-
+ 
 
 def onOpen(ws):
     # print("Sending service request")
@@ -364,11 +359,11 @@ def sendLoginRequest():
 
 def checkSensor(location_id=''):
     #可以带参数进来,否则就默认是文件头的location
-    print("Wait 3 Minutes before the abnormal motion sensors be detected")
     if location_id!='':
         global locationID
         locationID=location_id
     global rt,ws
+    print("Wait 3 Minutes to detect bad sensor in: ",locationID)
     rt = RepeatedTimer(timeToWait, showResult) #5分钟内没有数据，则视为坏
     ws = websocket.WebSocketApp("wss://" + cirrusHost + "/cirrusAPI",
                                 on_message=onMessage, on_close=onClose, on_open=onOpen, keep_running=True)
