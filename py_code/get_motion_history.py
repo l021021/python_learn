@@ -77,58 +77,35 @@ requestcount = 0
 HBFlag = 0
 msgQue = deque()
 count = 0
+ws=websocket
 
+# class RepeatedTimer(object):
+#     def __init__(self, interval, function, *args, **kwargs):
+#         self._timer = None
+#         self.interval = interval
+#         self.function = function
+#         self.args = args
+#         self.kwargs = kwargs
+#         self.is_running = False
+#         self.start()
 
-class RepeatedTimer(object):
-    def __init__(self, interval, function, *args, **kwargs):
-        self._timer = None
-        self.interval = interval
-        self.function = function
-        self.args = args
-        self.kwargs = kwargs
-        self.is_running = False
-        self.start()
+#     def _run(self):
+#         self.is_running = False
+#         self.start()
+#         self.function(*self.args, **self.kwargs)
 
-    def _run(self):
-        self.is_running = False
-        self.start()
-        self.function(*self.args, **self.kwargs)
+#     def start(self):
+#         if not self.is_running:
+#             self._timer = Timer(self.interval, self._run)
+#             self._timer.start()
+#             self.is_running = True
 
-    def start(self):
-        if not self.is_running:
-            self._timer = Timer(self.interval, self._run)
-            self._timer.start()
-            self.is_running = True
+#     def stop(self):
+#         self._timer.cancel()
+#         self.is_running = False
 
-    def stop(self):
-        self._timer.cancel()
-        self.is_running = False
         
         
-def get_motion_history(location_id='', start_str='', end_str='', data_type='UUID'):
-    #可以带参数进来,否则就默认是文件头的location,start...
-
-    global locationID, startstr, endstr, datatype,ws
-    if location_id != '':
-        locationID = location_id
-    if start_str != '':
-       startstr = start_str
-    if end_str != '':
-       endstr = end_str
-    if data_type != '':
-       datatype = data_type
-
-    print(datetime.now(), " Connecting to ",
-          cirrusHost, "with user ", username)
-    ws = websocket.WebSocketApp("wss://" + cirrusHost + "/cirrusAPI",
-                                on_message=onMessage, on_close=onClose, on_open=onOpen, keep_running=True)
-    ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
-
-    print("Wait 3 Minutes to detect bad sensor in: ", locationID)
-    # rt = RepeatedTimer(timeToWait, showResult)  # 5分钟内没有数据，则视为坏
-    ws = websocket.WebSocketApp("wss://" + cirrusHost + "/cirrusAPI",
-                                on_message=onMessage, on_close=onClose, on_open=onOpen, keep_running=True)
-    ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
 
 def calOccupancy():
     global CSVheader, startdt, enddt
@@ -299,7 +276,7 @@ def calOccupancy():
         Grid.to_csv(filename, header=CSVheader, mode='a+')
         CSVheader = False
     print('Calculation finished,check file :',filename)
-    sys.exit(1)
+    sys.exit(0)
     
 
 
@@ -317,7 +294,7 @@ def sendPeriodicRequest():
     sendMessage(request)
 
 
-rt = RepeatedTimer(30, sendPeriodicRequest)
+# rt = RepeatedTimer(30, sendPeriodicRequest)
 
 
 def onMessage(ws, message):
@@ -386,8 +363,8 @@ def onMessage(ws, message):
                                     ['did'], li['value'], eventtime])
         if requestcount == 0:
             print('\n', datetime.now(), ' Mission Accomplished')
-            rt.stop()
             ws.close()
+            # rt.stop()
             calOccupancy()
             sys.exit(0)
     else:
@@ -400,6 +377,8 @@ def onMessage(ws, message):
 
 def onClose(ws):
     print("\n----Connection to Cloud closed----\n")
+    rt.stop()
+    
 
 
 def onOpen(ws):
@@ -415,7 +394,7 @@ def sendFromQue():
 
 
 def sendMessage(message):
-    global ws
+    # global ws
     if ws.sock.connected != True:
         print("sendMessage: Could not send cirrus message, socket not open")
         return
@@ -534,8 +513,40 @@ def sendGetSamplesRequest(UnitDid, LocationId, start, end='', numberOfSamplesBef
         return(-1)
 
 
+def get_motion_history(location_id='', start_str='', end_str='', data_type='UUID'):
+    #可以带参数进来,否则就默认是文件头的location,start...
 
+    global locationID, startstr, endstr, datatype, ws, filename, filename1
+    if location_id != '':
+        locationID = location_id
+    if start_str != '':
+       startstr = start_str
+    if end_str != '':
+       endstr = end_str
+    if data_type != '':
+       datatype = data_type
+
+    print(location_id, start_str, end_str, data_type, '\n')
+    print(locationID, startstr, endstr, datatype, filename, filename1)
+
+    filename = "C:\\LOG\\"+locationID+"_"+startstr+"_"+endstr+'_'+datatype+"_PCT.csv"
+    filename1 = "C:\\LOG\\"+locationID+"_"+startstr+"_"+endstr+'_'+datatype+"_RAW.csv"
+
+    print(datetime.now(), " Connecting to ",
+          cirrusHost, "with user ", username)
+    ws = websocket.WebSocketApp("wss://" + cirrusHost + "/cirrusAPI",
+                                on_message=onMessage, on_close=onClose, on_open=onOpen, keep_running=True)
+    ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
+
+    print("Wait 3 Minutes to detect bad sensor in: ", locationID)
+    # rt = RepeatedTimer(timeToWait, showResult)  # 5分钟内没有数据，则视为坏
+    ws = websocket.WebSocketApp("wss://" + cirrusHost + "/cirrusAPI",
+                                on_message=onMessage, on_close=onClose, on_open=onOpen, keep_running=True)
+    ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
 
 if __name__ == "__main__":
     get_motion_history()
     os._exit(0)
+
+
+
