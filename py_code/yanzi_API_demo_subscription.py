@@ -106,12 +106,21 @@ def onMessage(ws, message):
             sessionId = response['sessionId']
             # sendGetUnitsRequest(locationID)
             # sendSubscribeRequest(locationID,['lifecycle']) #
-            sendSubscribeRequest(locationID,['lifecycle','config','data','assetSlots','occupancy','battery',\
-                                        'sensorData','sensorSlots','assetData','occupancySlots']) #
+            #!!订阅的数据选项
+            sendSubscribeRequest(locationID,['lifecycle',
+                                             'config',
+                                             'data',
+                                             'assetSlots',
+                                             'occupancy',
+                                             'battery',
+                                             'sensorData',
+                                             'sensorSlots',
+                                             'assetData',
+                                             'occupancySlots']) #
             sendPeriodicRequest()
         else:
             print(response)
-            sys.exit(-1)
+            sys.exit(0)
     elif response["messageType"] == "PeriodicResponse":
         HBFlag = 0
         # print("( periodic response rcvd )")
