@@ -22,6 +22,20 @@ from pprint import pprint
 import websocket
 from threading import Timer
 
+locationID = "573742"  # ft
+# locationID = "252208"
+# locationID = "74365"  # kerry
+
+# locationID = "229349"  # ft
+# locationID = "521209"  # wf
+# locationID = "879448"  # snf
+# locationID = "368307"  # yuanjin1
+# locationID = "834706"  # yuanjin2
+# locationID = "234190"  # yuanjin3
+# locationID = "251092"  # yuanjin4
+# locationID = "725728"  # yuanjin5
+# locationID = "503370"  # wanke
+# locationID = "942787"  # test1
 class RepeatedTimer(object):
     def __init__(self, interval, function, *args, **kwargs):
         self._timer = None
@@ -55,20 +69,6 @@ cirrusHost = "cirrus20.yanzi.se"
 username = 'frank.shen@pinyuaninfo.com'
 password = 'Ft@Sugarcube99'
 
-locationID = "879448"  # snf
-# locationID = "252208"
-# locationID = "74365"  # kerry
-
-# locationID = "229349"  # ft
-# locationID = "521209"  # wf
-# locationID = "879448"  # snf
-# locationID = "368307"  # yuanjin1
-# locationID = "834706"  # yuanjin2
-# locationID = "234190"  # yuanjin3
-locationID = "251092"  # yuanjin4
-locationID = "725728"  # yuanjin5
-# locationID = "503370"  # wanke
-locationID = "942787"  # test1
 
 
 
@@ -100,8 +100,8 @@ def onMessage(ws, message):
        # sys.exit(-1)
     elif response["messageType"] == "PeriodicResponse":
         HBFlag = 0
-        print("( periodic response rcvd )")
-        rt.start()
+        # print("( periodic response rcvd )")
+        # rt.start()
 
     elif response["messageType"] == "ServiceResponse":
         # pprint(response)
@@ -126,6 +126,8 @@ def onMessage(ws, message):
                     assetList[response['unitAddress']['did']] = response['list'][0]['value']
                     sensorList[response['unitAddress']['did']][1] = response['list'][0]['value']
                     setUnitLogicName(locationID, response['unitAddress']['did'], sensorList[response['list'][0]['value']][0])  # 传感器名字
+                    print('renaming sensor name to asset name for ', response['unitAddress']['did'])
+        
                     # sensorList[response['unitAddress']['did']][2] = response['list'][0]['value'] #asset名字
     
     elif response["messageType"] == "GetUnitsResponse":
@@ -142,8 +144,8 @@ def onMessage(ws, message):
                     # 有个问题，TODO 需要优先取ASSET的名字而不是传感器的
                 
                 if unit['unitAddress']['did'].find('UU')!=-1: #显示资产名称
-                    setDisplayFlag(locationID, unit['unitAddress']['did'], 'true')
-                    print('Display Asset ',unit['unitAddress']['did'])
+                    # setDisplayFlag(locationID, unit['unitAddress']['did'], 'true')
+                    print('Display Asset name on map:',unit['unitAddress']['did'])
             else:
                 print('skipping ', unit['unitAddress']['did']) #逻辑传感器 和网关
        
@@ -216,7 +218,7 @@ def showResult():
         for k,v in sensorList.items():
             if k.find('EU')!=-1:
                 # print(k,'--',v,end='----\n')
-                print('key',k,'0:',v[0],'1:',v[1],'2:',v[2])
+                # print('key',k,'0:',v[0],'1:',v[1],'2:',v[2])
                 if v[1] in sensorList:
                     v[2]=sensorList[v[1]][0]
                 # print(v[2], 'xxx', sensorList[v[1]][1])
@@ -227,7 +229,7 @@ def showResult():
         list=list[list.ASSET!='']
         # list.remove( lambda x:x.ASSET='')
         pprint(list)
-        list.to_csv('C:\\LOG\\'+locationID+'_name.csv', mode='w', encoding='utf-8')
+        list.to_excel('C:\\LOG\\'+locationID+'_name.xls',sheet_name='sheet1', encoding='utf-8')
     ws.close()
 
 def onClose(ws):
@@ -278,7 +280,7 @@ def sendMessage(message):
 
 
 def sendMessagetoQue(message):
-    global msgQue
+    global msgQue,ws
     message['timeSent'] = int(time.time() * 1000)
     msg = json.dumps(message)
     msgQue.append(msg)
@@ -295,7 +297,18 @@ def sendServiceRequest():
 
 def sendGetUnitsRequest(locationID):
     request = {"messageType": 'GetUnitsRequest', "timeSent": int(time.time(
-    ) * 1000), "locationAddress": {"resourceType": 'LocationAddress', "locationId": locationID}}
+    ) * 1000), "locationAddress": {"resourceType": 'LocationAddress', "locationId": locationID}
+            #    , 
+    #     "matchList":  [
+
+    #     {
+    #         "resourceType": "MatchDTO",
+    #         "name": "unitTypeFixed",
+    #         "matchType": "equals",
+    #         "value": "physicalOrChassis"
+    #     }
+    # ]
+        }
     print('sending getunits request for ' + locationID)
     sendMessagetoQue(request)
 
@@ -315,11 +328,11 @@ def get_sensor_asset_binding(location_id=''):
     if location_id!='':
         global locationID
         locationID=location_id
-    global rt,ws
+    global ws,rt
         
     print(datetime.now(), " Connecting to ",
           cirrusHost, "with user ", username)
-    rt = RepeatedTimer(30, showResult)
+    rt = RepeatedTimer(10, showResult)
     ws = websocket.WebSocketApp("wss://" + cirrusHost + "/cirrusAPI",
                                 on_message=onMessage, on_close=onClose, on_open=onOpen, keep_running=True)
     ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})

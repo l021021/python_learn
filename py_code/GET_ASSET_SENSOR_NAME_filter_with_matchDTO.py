@@ -161,9 +161,9 @@ def sendGetUnitsRequest2(locationID):
       
         {
             "resourceType": "MatchDTO",
-            "name": "lifeCycleState",
-            "matchType": "any",
-            "value": "present"
+            "name": "unitTypeFixed",
+            "matchType": "equals",
+            "value": "physicalOrChassis"
         }
     ]
     }
