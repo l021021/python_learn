@@ -538,12 +538,7 @@ def get_motion_history(location_id='', start_str='', end_str='', data_type='UUID
                                 on_message=onMessage, on_close=onClose, on_open=onOpen, keep_running=True)
     ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
 
-    print("Wait 3 Minutes to detect bad sensor in: ", locationID)
-    # rt = RepeatedTimer(timeToWait, showResult)  # 5分钟内没有数据，则视为坏
-    ws = websocket.WebSocketApp("wss://" + cirrusHost + "/cirrusAPI",
-                                on_message=onMessage, on_close=onClose, on_open=onOpen, keep_running=True)
-    ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
-
+   
 if __name__ == "__main__":
     get_motion_history()
     os._exit(0)
