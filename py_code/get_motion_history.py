@@ -51,7 +51,7 @@ locationID = "74365"  # kerry
 # locationID = "503370"  # 万科
 
 startstr = '2021-01-28-09-00-00'
-endstr = '2021-01-31-17-59-59'
+endstr = '2021-01-29-17-59-59'
 datatype = 'UUID'  # Motion | UUID  #选择要采的数据类型
 
 
@@ -113,6 +113,12 @@ def calOccupancy():
     data.to_csv(filename1,index=None)
     data['TIME'] = pd.to_datetime(data['TIME'])
     data['flag'] = '' #加入第三列,作为以后处理的标志位
+    
+    
+    #解决数据中时间记录早于设定的起点的问题
+    startdt1=np.datetime64(startdt)
+    data['TIME'] =np.where(data['TIME']>startdt1,data['TIME'],startdt1)
+    
   
 
     print('Total records:', len(data))
