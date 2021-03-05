@@ -47,7 +47,7 @@ locationID = "74365"  # kerry
 # locationID = "834706"  # yuanjin2
 # locationID = "234190"  # yuanjin3
 # locationID = "251092"  # yuanjin4
-# locationID = "725728"  # yuanjin5
+locationID = "725728"  # yuanjin5
 # locationID = "503370"  # 万科
 
 startstr = '2021-01-28-09-00-00'
@@ -113,6 +113,9 @@ def calOccupancy():
     data.to_csv(filename1,index=None)
     data['TIME'] = pd.to_datetime(data['TIME'])
     data['flag'] = '' #加入第三列,作为以后处理的标志位
+    
+    #删除单个记录的传感器:可能是已删除的
+    data = pd.concat([data, data.drop_duplicates('ID', keep=False)]).drop_duplicates(keep=False)
     
     
     #解决数据中时间记录早于设定的起点的问题
@@ -320,7 +323,7 @@ def onMessage(ws, message):
             sendGetUnitsRequest(locationID)
             sendPeriodicRequest()
         else:
-            sys.exit(-1)
+            sys.exit(0)
     elif response["messageType"] == "PeriodicResponse":
         HBFlag = 0
         print("( periodic response rcvd )")
@@ -368,7 +371,7 @@ def onMessage(ws, message):
                     motionRecordList.append([response['sampleListDto']['dataSourceAddress']
                                     ['did'], li['value'], eventtime])
         if requestcount == 0:
-            print('\n', datetime.now(), ' Mission Accomplished')
+            print('\n', datetime.now(), ' >>>>Historical data retrieved<<<<')
             ws.close()
             # rt.stop()
             calOccupancy()
@@ -522,7 +525,7 @@ def sendGetSamplesRequest(UnitDid, LocationId, start, end='', numberOfSamplesBef
 def get_motion_history(location_id='', start_str='', end_str='', data_type='UUID'):
     #可以带参数进来,否则就默认是文件头的location,start...
 
-    global locationID, startstr, endstr, datatype, ws, filename, filename1
+    global locationID, startstr, endstr, datatype, ws, filename, filename1,startdt,enddt
     if location_id != '':
         locationID = location_id
     if start_str != '':
@@ -531,12 +534,18 @@ def get_motion_history(location_id='', start_str='', end_str='', data_type='UUID
        endstr = end_str
     if data_type != '':
        datatype = data_type
-
-    print(location_id, start_str, end_str, data_type, '\n')
-    print(locationID, startstr, endstr, datatype, filename, filename1)
+       
+    
 
     filename = "C:\\LOG\\"+locationID+"_"+startstr+"_"+endstr+'_'+datatype+"_PCT.csv"
     filename1 = "C:\\LOG\\"+locationID+"_"+startstr+"_"+endstr+'_'+datatype+"_RAW.csv"
+
+    startdt = datetime.fromtimestamp(
+        (time.mktime(time.strptime(startstr, patternr))))
+    enddt = datetime.fromtimestamp((time.mktime(time.strptime(endstr, patternr))))
+
+    print('Serving request:',location_id, start_str, end_str, data_type, '\n')
+    print('default:',locationID, startstr, endstr, datatype, filename, filename1)
 
     print(datetime.now(), " Connecting to ",
           cirrusHost, "with user ", username)
