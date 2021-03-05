@@ -79,33 +79,7 @@ msgQue = deque()
 count = 0
 ws=websocket
 
-# class RepeatedTimer(object):
-#     def __init__(self, interval, function, *args, **kwargs):
-#         self._timer = None
-#         self.interval = interval
-#         self.function = function
-#         self.args = args
-#         self.kwargs = kwargs
-#         self.is_running = False
-#         self.start()
 
-#     def _run(self):
-#         self.is_running = False
-#         self.start()
-#         self.function(*self.args, **self.kwargs)
-
-#     def start(self):
-#         if not self.is_running:
-#             self._timer = Timer(self.interval, self._run)
-#             self._timer.start()
-#             self.is_running = True
-
-#     def stop(self):
-#         self._timer.cancel()
-#         self.is_running = False
-
-        
-        
 
 def calOccupancy():
     global CSVheader, startdt, enddt
@@ -122,9 +96,7 @@ def calOccupancy():
     startdt1=np.datetime64(startdt)
     data['TIME'] =np.where(data['TIME']>startdt1,data['TIME'],startdt1)
     
-  
-
-    print('Total records:', len(data))
+    print('Total history records:', len(data))
 
     # 建立时间轴
     # 根据数据生成目标时间格子
@@ -288,7 +260,6 @@ def calOccupancy():
     sys.exit(0)
     
 
-
 def sendPeriodicRequest():
     global HBFlag
     request = {"messageType": "PeriodicRequest",
@@ -302,8 +273,6 @@ def sendPeriodicRequest():
         print('(', HBFlag, 'periodic request missed )')
     sendMessage(request)
 
-
-# rt = RepeatedTimer(30, sendPeriodicRequest)
 
 
 def onMessage(ws, message):
@@ -380,13 +349,10 @@ def onMessage(ws, message):
         print(response)
 
 
-# def onError(ws, error):
-#     print("Error", error)
-
 
 def onClose(ws):
     print("\n----Connection to Cloud closed----\n")
-    rt.stop()
+    # rt.stop()
     
 
 
@@ -521,7 +487,10 @@ def sendGetSamplesRequest(UnitDid, LocationId, start, end='', numberOfSamplesBef
     else:
         return(-1)
 
-
+def delfile(filename):
+    if os.path.exists(filename):
+        os.remove(filename)
+    
 def get_motion_history(location_id='', start_str='', end_str='', data_type='UUID'):
     #可以带参数进来,否则就默认是文件头的location,start...
 
@@ -536,9 +505,12 @@ def get_motion_history(location_id='', start_str='', end_str='', data_type='UUID
        datatype = data_type
        
     
-
     filename = "C:\\LOG\\"+locationID+"_"+startstr+"_"+endstr+'_'+datatype+"_PCT.csv"
     filename1 = "C:\\LOG\\"+locationID+"_"+startstr+"_"+endstr+'_'+datatype+"_RAW.csv"
+    
+    delfile(filename)
+    delfile(filename1)
+    
 
     startdt = datetime.fromtimestamp(
         (time.mktime(time.strptime(startstr, patternr))))
