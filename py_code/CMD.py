@@ -6,13 +6,14 @@ import  os,sys
 from get_motion_history import get_motion_history
 
 startstr = '2021-03-01-09-00-00'
-endstr = '2021-03-05-08-59-59'
+endstr = '2021-03-10-10-59-59'
 datatype = 'UUID'  # Motion | UUID  #选择要采的数据类型
 
 
 locations = [ "368307" ,"834706"  ,"234190"  ,"251092" ,"725728"  ] #yuanjin
 # locations = [ "800424" ,"155697" ] #teslian
-# locations = [ "402837" ,"952675 "  ,"268429"  ,"732449" ,"328916"  ] #huaian
+# locations = ["402837", "952675", "268429", "732449", "328916"]  # huaian
+# locations = ["836278", "951519", "480686", "578981", "459374", "395065"]  # sunao
 # locations = [ "897737" ,"521209"  ] #wafer
 counter=len(locations)
 def when_done(r):

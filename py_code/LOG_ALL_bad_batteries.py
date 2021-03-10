@@ -25,11 +25,11 @@ import websocket
 from RT import RepeatedTimer
 
 # The cirrus host to connect to:
-cirrusHost = "cirrus20.yanzi.se"
+cirrusHost = "cirrus.ifangtang.net"
 
 # Change the username and password to the Yanzi credentials:
-username = 'frank.shen@pinyuaninfo.com'
-password = 'Ft@Sugarcube99'
+username = 'frank.shen@sugarinc.cn'
+password = 'iFangtang#899'
 
 datalists = []
 csvlist = []

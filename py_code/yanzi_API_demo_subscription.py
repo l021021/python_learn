@@ -21,19 +21,22 @@ import websocket
 from RT import RepeatedTimer
 
 # The cirrus host to connect to:
-cirrusHost = "cirrus20.yanzi.se"
+cirrusHost = "cirrus.ifangtang.net"
 
 # Change the username and password to the Yanzi credentials:
-username = 'frank.shen@pinyuaninfo.com'
-password = 'Ft@Sugarcube99'
+username = 'frank.shen@sugarinc.cn'
+password = 'iFangtang#899'
+
+username = '627619401@qq.com'
+password = '00000000'
 
 # locationID = "879448"  # snf
 # locationID = "655623"
 # locationID = "74365"  # kerry
 
-# locationID = "229349"  # ft
+# locationID = "573742"  # ft
 # locationID = "521209"  # wf
-locationID = "503370" # sunon 6
+locationID = "503370" # sunon 
 
 startstr = '2020-11-18-12-00-00'
 endstr = '2020-11-20-08-00-00'
@@ -127,23 +130,23 @@ def onMessage(ws, message):
         rt.start()
 
     elif response["messageType"] == "SubscribeData":
-        print('\n-------',end='--')
+        print('>', str(datetime.now().time())[0:8],'>',end='')
         # for list,*other,subscriptionType,timesent in response:
-        print(response['subscriptionType']['name'],end='--')
+        print(response['subscriptionType']['name'],end='-')
         # print(response['list'][0]['list'][0]['resourceType'],end='--')
 
         try:
             if response['subscriptionType']['name'] in ['data','assetData']:
-                print(response['list'][0]['dataSourceAddress']['did'])
-                print(response['list'][0]['dataSourceAddress']['variableName']['name'])
+                print(response['list'][0]['dataSourceAddress']['did'],  end='-')
+                print(response['list'][0]['dataSourceAddress']['variableName']['name'], end='-')
                 # print(response['list'][0]['list'][0]['value'],'\n ')
                 # print(response['list'][0]['list'][0]['assetState']['name'])
                 # for 
                 print((response['list'][0]['list'][0]['value'] if 'value' in response['list'][0]['list'][0] else \
                     response['list'][0]['list'][0]['assetState']['name']))
             elif response['subscriptionType']['name'] == 'battery':
-                print(response['list'][0]['dataSourceAddress']['did'])
-                print(response['list'][0]['list'][0]['value'])
+                print(response['list'][0]['dataSourceAddress']['did'], end='-')
+                print(response['list'][0]['list'][0]['value'], end='-')
             # print(response['list'][0]['list'][0]['value'],'\n ')
             # print(response['list'][0]['list'][0]['assetState']['name'])
             # for 
@@ -152,21 +155,21 @@ def onMessage(ws, message):
                 
       
             elif response['subscriptionType']['name'] =='occupancySlots':
-                print(response['list'][0]['dataSourceAddress']['did'])
+                print(response['list'][0]['dataSourceAddress']['did'], end='-')
                 print(response['list'][0]['list'][0]['sample']['assetState']['name'])
             elif response['subscriptionType']['name'] =='lifecycle':
-                print(response['list'][0]['eventType']['name'])
+                print(response['list'][0]['eventType']['name'], end='-')
                 print(response['list'][0]['unitAddress']['did'])
                 # print(response['list'][0]['list'][0]['deviceUpState']['name'])
             elif response['subscriptionType']['name'] =='sensorSlots':
-                print(response['list'][0]['dataSourceAddress']['did'])
-                print(response['list'][0]['list'][0]['aggregateValue'])
+                print(response['list'][0]['dataSourceAddress']['did'], end='-')
+                print(response['list'][0]['list'][0]['aggregateValue'], end='-')
             # elif response['subscriptionType']['name'] =='occupancy':
                 
             #     print(response['list'][0]['dataSourceAddress']['did'])
             elif response['subscriptionType']['name'] == 'sensorData':
-                print(response['list'][0]['dataSourceAddress']['did'])
-                print(response['list'][0]['dataSourceAddress']['variableName']['name'])
+                print(response['list'][0]['dataSourceAddress']['did'], end='-')
+                print(response['list'][0]['dataSourceAddress']['variableName']['name'], end='-')
 
                 print((response['list'][0]['list'][0]['value'] if 'value' in response['list'][0]['list'][0] else \
                     response['list'][0]['list'][0]['assetState']['name']))
@@ -174,7 +177,7 @@ def onMessage(ws, message):
                 print(response['list'][0]['dataSourceAddress']['did'])
                 print(response['list'][0]['list'][0]['aggregateValue'])
             elif response['subscriptionType']['name'] =='occupancy':
-                print(response['list'][0]['dataSourceAddress']['did'])
+                print(response['list'][0]['dataSourceAddress']['did'], end='-')
                 print(response['list'][0]['list'][0]['assetState']['name'])
             else:
 

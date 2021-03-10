@@ -29,11 +29,11 @@ import pandas as pd
 import websocket
 
 # The cirrus host to connect to:
-cirrusHost = "cirrus20.yanzi.se"
-# Change the username and password to the Yanzi credentials:
-username = 'frank.shen@pinyuaninfo.com'
-password = 'Ft@Sugarcube99'
+cirrusHost = "cirrus.ifangtang.net"
 
+# Change the username and password to the Yanzi credentials:
+username = 'frank.shen@sugarinc.cn'
+password = 'iFangtang#899'
 #!! 需要修改的部分
 
 # locationID = "879448"  # snf
@@ -296,7 +296,7 @@ def onMessage(ws, message):
     elif response["messageType"] == "PeriodicResponse":
         HBFlag = 0
         print("( periodic response rcvd )")
-        rt.start()
+        # rt.start()
 
     elif response["messageType"] == "SubscribeData":
         print('  Subscription     :', response)

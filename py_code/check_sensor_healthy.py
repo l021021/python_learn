@@ -50,12 +50,12 @@ class RepeatedTimer(object):
 
 
 # The cirrus host to connect to:
-cirrusHost = "cirrus20.yanzi.se"
+# The cirrus host to connect to:
+cirrusHost = "cirrus.ifangtang.net"
 
 # Change the username and password to the Yanzi credentials:
-username = 'frank.shen@pinyuaninfo.com'
-password = 'Ft@Sugarcube99'
-
+username = 'frank.shen@sugarinc.cn'
+password = 'iFangtang#899'
 # locationID = "879448"  # snf
 # locationID = "252208"
 # locationID = "74365"  # kerry
