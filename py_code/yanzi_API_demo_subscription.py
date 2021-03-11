@@ -27,16 +27,17 @@ cirrusHost = "cirrus.ifangtang.net"
 username = 'frank.shen@sugarinc.cn'
 password = 'iFangtang#899'
 
-username = '627619401@qq.com'
-password = '00000000'
+# username = '627619401@qq.com'
+# password = '00000000'
 
 # locationID = "879448"  # snf
 # locationID = "655623"
 # locationID = "74365"  # kerry
+locationID = "323602"  # kerry
 
 # locationID = "573742"  # ft
 # locationID = "521209"  # wf
-locationID = "503370" # sunon 
+# locationID = "503370" # sunon 
 
 startstr = '2020-11-18-12-00-00'
 endstr = '2020-11-20-08-00-00'
@@ -96,16 +97,17 @@ def onMessage(ws, message):
     # HBFlag = 0
 
     if response["messageType"] == "ErrorResponse":
-        print(response)
+        print('Error while connecting',response)
         sys.exit(-1)
 
     elif response["messageType"] == "ServiceResponse":
         # pprint(response)
-        print("Got ServiceResponse, sending login request")
+        # print("Got ServiceResponse, sending login request")
         # We got a service response, let’s try to login:
         sendLoginRequest()
     elif response["messageType"] == "LoginResponse":
         if (response['responseCode']['name'] == 'success'):
+            print('Login to ',locationID)
             sessionId = response['sessionId']
             # sendGetUnitsRequest(locationID)
             # sendSubscribeRequest(locationID,['lifecycle']) #
@@ -404,8 +406,7 @@ def sendGetSamplesRequest(UnitDid, LocationId, start, end):
 
 
 if __name__ == "__main__":
-    print(datetime.now(), " Connecting to ",
-          cirrusHost, "with user ", username)
+    # print(datetime.now(), " Connecting to ",          cirrusHost, "with user ", username)
     ws = websocket.WebSocketApp("wss://" + cirrusHost + "/cirrusAPI",
                                 on_message=onMessage, on_close=onClose, on_open=onOpen, keep_running=True)
     ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
