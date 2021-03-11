@@ -30,14 +30,20 @@ password = 'iFangtang#899'
 # username = '627619401@qq.com'
 # password = '00000000'
 
+# username = 'ic@isunon.com'
+# password = 'Sunon@123'
+# username = 'lihongyuan@wafersystems.com'
+# password = 'Wafer!123'
+
+
 # locationID = "879448"  # snf
 # locationID = "655623"
 # locationID = "74365"  # kerry
-locationID = "323602"  # kerry
+# locationID = "323602"  # kerry
 
 # locationID = "573742"  # ft
 # locationID = "521209"  # wf
-# locationID = "503370" # sunon 
+locationID = "274189" # sunon 
 
 startstr = '2020-11-18-12-00-00'
 endstr = '2020-11-20-08-00-00'

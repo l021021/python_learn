@@ -69,6 +69,9 @@ cirrusHost = "cirrus.ifangtang.net"
 username = 'frank.shen@sugarinc.cn'
 password = 'iFangtang#899'
 
+username = 'ic@isunon.com'
+password = 'Sunon@123'
+
 
 
 datalists = []
