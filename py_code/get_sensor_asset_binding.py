@@ -63,12 +63,11 @@ class RepeatedTimer(object):
 
 
 # The cirrus host to connect to:
-cirrusHost = "cirrus20.yanzi.se"
+cirrusHost = "cirrus.ifangtang.net"
 
 # Change the username and password to the Yanzi credentials:
-username = 'frank.shen@pinyuaninfo.com'
-password = 'Ft@Sugarcube99'
-
+username = 'frank.shen@sugarinc.cn'
+password = 'iFangtang#899'
 
 
 
@@ -125,8 +124,8 @@ def onMessage(ws, message):
                     #把配置时自定的Asset名字写到asset和对应的传感器,并配置到live
                     assetList[response['unitAddress']['did']] = response['list'][0]['value']
                     sensorList[response['unitAddress']['did']][1] = response['list'][0]['value']
-                    setUnitLogicName(locationID, response['unitAddress']['did'], sensorList[response['list'][0]['value']][0])  # 传感器名字
-                    print('renaming sensor name to asset name for ', response['unitAddress']['did'])
+                    # setUnitLogicName(locationID, response['unitAddress']['did'], sensorList[response['list'][0]['value']][0])  # 传感器名字
+                    # print('renaming sensor name to asset name for ', response['unitAddress']['did'])
         
                     # sensorList[response['unitAddress']['did']][2] = response['list'][0]['value'] #asset名字
     
@@ -330,8 +329,7 @@ def get_sensor_asset_binding(location_id=''):
         locationID=location_id
     global ws,rt
         
-    print(datetime.now(), " Connecting to ",
-          cirrusHost, "with user ", username)
+    # print(datetime.now(), " Connecting to ",          cirrusHost, "with user ", username)
     rt = RepeatedTimer(10, showResult)
     ws = websocket.WebSocketApp("wss://" + cirrusHost + "/cirrusAPI",
                                 on_message=onMessage, on_close=onClose, on_open=onOpen, keep_running=True)
