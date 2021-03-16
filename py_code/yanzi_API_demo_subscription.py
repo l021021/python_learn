@@ -41,39 +41,15 @@ password = 'iFangtang#899'
 # locationID = "74365"  # kerry
 # locationID = "323602"  # kerry
 
-# locationID = "573742"  # ft
+locationID = "573742"  # ft
 # locationID = "521209"  # wf
-locationID = "274189" # sunon 
+# locationID = "274189" # sunon 
 
-startstr = '2020-11-18-12-00-00'
-endstr = '2020-11-20-08-00-00'
-
-
-datatype = 'UUID'  # Motion | UUID | TEMP ...
-splitDays = 20 if datatype == 'UUID' else 1
-
-patternr = '%Y-%m-%d-%H-%M-%S'
-patternw = '%Y-%m-%d %H:%M:%S'
-
-startdt = datetime.fromtimestamp(
-    (time.mktime(time.strptime(startstr, patternr))))
-enddt = datetime.fromtimestamp((time.mktime(time.strptime(endstr, patternr))))
-datalists = []
-csvlist = []
 requestcount = 0
 HBFlag = 0
 msgQue = deque()
 count = 0
 sessionId=''
-
-
-def writetofile():
-    filename = "C:\\LOG\\"+locationID+"_"+startstr+"_"+endstr+"_RAW.csv"
-    with open(filename, 'w', encoding='utf-8', newline='') as f:  # ! 注意修改文件名
-        writer = csv.writer(f)
-        writer.writerow(['ID', 'EVENT', 'TIME'])
-        writer.writerows(csvlist)
-        f.close()
 
 
 def sendPeriodicRequest():

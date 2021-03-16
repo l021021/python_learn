@@ -8,7 +8,7 @@
        数据类型
        
        文件的默认目录是 c:\LOG
-遗留问题:为了不存在空洞,必须取Last记录,如果一个传感器下线,这个记录可能是很久以前的,造成计算量太大
+       统计间隔是5分钟以上,可选.
 """
 
 import datetime
@@ -21,20 +21,15 @@ from datetime import datetime, timedelta
 from pprint import pprint
 from time import sleep
 from threading import Timer
-
-
-import matplotlib as plt
 import numpy as np
 import pandas as pd
 import websocket
-
-# The cirrus host to connect to:
 cirrusHost = "cirrus.ifangtang.net"
 
-# Change the username and password to the Yanzi credentials:
+
+# The cirrus host to connect to:
 username = 'frank.shen@sugarinc.cn'
 password = 'iFangtang#899'
-#!! 需要修改的部分
 
 # locationID = "879448"  # snf
 # locationID = "655623"
@@ -47,12 +42,13 @@ locationID = "74365"  # kerry
 # locationID = "834706"  # yuanjin2
 # locationID = "234190"  # yuanjin3
 # locationID = "251092"  # yuanjin4
-locationID = "725728"  # yuanjin5
+# locationID = "725728"  # yuanjin5
 # locationID = "503370"  # 万科
 
 startstr = '2021-01-28-09-00-00'
 endstr = '2021-01-29-17-59-59'
 datatype = 'UUID'  # Motion | UUID  #选择要采的数据类型
+timeGrid='30T' #统计间隔 30T 是30分钟
 
 
 
@@ -208,7 +204,7 @@ def calOccupancy():
                         # print('    continue 1 ', post, Gridresult.at[post, 'occ'])
 
             else:   # !!说明这是一个事件
-                print(stamp, event, end='..')
+                # print(stamp, event, end='..')
                 post = stamp.replace(microsecond=0, second=0, minute=stamp.minute//5*5)  # 记入格子:就是前一个整五分
                 #防止有异常的记录,是在时间范围之外的
                 if post<min:
@@ -219,9 +215,9 @@ def calOccupancy():
                 if event == 'free':
                     if pd.isna(Gridresult.at[post, 'PCT']): #!!如果有记录在start和end之外.造成POST出没有记录,会报错
                         Gridresult.at[post, 'PCT'] = 1.0
-                        print('-- 1.0 assumed', post, Gridresult.at[post, 'PCT'])
+                        # print('-- 1.0 assumed', post, Gridresult.at[post, 'PCT'])
 
-                    print('  !!!    ', event, stamp, post, nextp, -offset)
+                    # print('  !!!    ', event, stamp, post, nextp, -offset)
                     offset = -offset
                     flag = 'free'
         #             offset=stamp-post
@@ -229,19 +225,17 @@ def calOccupancy():
                 elif event == 'occupied':
                     if pd.isna(Gridresult.at[post, 'PCT']):
                         Gridresult.at[post, 'PCT'] = 0.0
-                        print('-- 0.0 assumed', post, Gridresult.at[post, 'PCT'])
+                        # print('-- 0.0 assumed', post, Gridresult.at[post, 'PCT'])
 
-                    print('  ???  ',       event, stamp, post, nextp, -offset)
+                    # print('  ???  ',       event, stamp, post, nextp, -offset)
                     flag = 'occupied'
                     #             要在post的格子里面加上offset部分
-                print(' -- was', post, Gridresult.at[post, 'PCT'], offset)
+                # print(' -- was', post, Gridresult.at[post, 'PCT'], offset)
                 Gridresult.at[post, 'PCT'] = float(offset+Gridresult.at[post, 'PCT']) if (Gridresult.at[post, 'PCT']+offset) > 0 else 0.0000
-                print(' -- now recorded', post, Gridresult.at[post, 'PCT'])
+                # print(' -- now recorded', post, Gridresult.at[post, 'PCT'])
 
         # print(Gridresult.info())
-        # Gridresult = Gridresult[Gridresult.occ >= 0]
-        # Gridresult.plot()
-        # Grid30 = Gridresult.resample('30T', axis=0).mean()
+        # # Gridresult = Gridresult[Gridresult.occ >= 0]
         # filter= [Gridresult['PCT'] >= 0.5]
         # Gridresult.reset_index()
 
@@ -250,8 +244,12 @@ def calOccupancy():
         Grid = Gridresult
         # Grid= Grid[Grid[]<=enddt]
 
-        Grid['ID'] = id
         Grid.set_index('TIME', inplace=True)
+        #!! 重取样
+        if timeGrid!='5T':
+            Grid = Grid.resample(timeGrid, axis=0).mean()
+        Grid['ID'] = id
+        
         # Grid.plot()
 
         Grid.to_csv(filename, header=CSVheader, mode='a+')
