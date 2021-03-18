@@ -45,9 +45,9 @@ locationID = "74365"  # kerry
 # locationID = "725728"  # yuanjin5
 # locationID = "503370"  # 万科
 
-startstr = '2021-03-08-09-00-00'
-endstr = '2021-03-12-17-59-59'
-datatype = 'Motion'  # Motion | UUID  #选择要采的数据类型
+startstr = '2021-01-28-09-00-00'
+endstr = '2021-01-29-17-59-59'
+datatype = 'UUID'  # Motion | UUID  #选择要采的数据类型
 timeGrid='30T' #统计间隔 30T 是30分钟
 
 
@@ -57,8 +57,8 @@ timeGrid='30T' #统计间隔 30T 是30分钟
 """
 CSVheader = True
 splitDays = 20 if datatype == 'UUID' else 1
-filename = "C:\\LOG\\"+locationID+"_"+startstr+"_"+endstr+'_'+datatype+'_'+timeGrid+"_PCT.csv"
-filename1 = "C:\\LOG\\"+locationID+"_"+startstr+"_"+endstr+'_'+datatype+'_'+timeGrid+"_RAW.csv"
+filename = "C:\\LOG\\"+locationID+"_"+startstr+"_"+endstr+'_'+datatype+"_PCT.csv"
+filename1 = "C:\\LOG\\"+locationID+"_"+startstr+"_"+endstr+'_'+datatype+"_RAW.csv"
 
 patternr = '%Y-%m-%d-%H-%M-%S'
 patternw = '%Y-%m-%d %H:%M:%S'
@@ -489,7 +489,7 @@ def delfile(filename):
     if os.path.exists(filename):
         os.remove(filename)
     
-def get_motion_history(location_id='', start_str='', end_str='', data_type=''):
+def get_motion_history(location_id='', start_str='', end_str='', data_type='UUID'):
     #可以带参数进来,否则就默认是文件头的location,start...
 
     global locationID, startstr, endstr, datatype, ws, filename, filename1,startdt,enddt
@@ -502,9 +502,9 @@ def get_motion_history(location_id='', start_str='', end_str='', data_type=''):
     if data_type != '':
        datatype = data_type
        
-
-    filename = "C:\\LOG\\"+locationID+"_"+startstr+"_"+endstr+'_'+datatype+'_'+timeGrid+"_PCT.csv"
-    filename1 = "C:\\LOG\\"+locationID+"_"+startstr+"_"+endstr+'_'+datatype+'_'+timeGrid+"_RAW.csv"
+    
+    filename = "C:\\LOG\\"+locationID+"_"+startstr+"_"+endstr+'_'+datatype+"_PCT.csv"
+    filename1 = "C:\\LOG\\"+locationID+"_"+startstr+"_"+endstr+'_'+datatype+"_RAW.csv"
     
     delfile(filename)
     delfile(filename1)
