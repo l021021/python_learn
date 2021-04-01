@@ -94,16 +94,19 @@ def onMessage(ws, message):
             # sendGetUnitsRequest(locationID)
             # sendSubscribeRequest(locationID,['lifecycle']) #
             #!!订阅的数据选项
-            sendSubscribeRequest(locationID,['lifecycle',
-                                             'config',
+            sendSubscribeRequest(locationID,[
+                # 'lifecycle',
+                                            #  'config',
                                              'data',
-                                             'assetSlots',
-                                             'occupancy',
-                                             'battery',
-                                             'sensorData',
-                                             'sensorSlots',
-                                             'assetData',
-                                             'occupancySlots']) #
+                                            #  'assetSlots',
+                                            #  'occupancy',
+                                            #  'battery',
+                                            #  'sensorData',
+                                            #  'sensorSlots',
+                                             'assetData'
+                                             
+                                            #  ,'occupancySlots'
+                                             ]) #
             sendPeriodicRequest()
         else:
             print(response)
@@ -123,11 +126,19 @@ def onMessage(ws, message):
             if response['subscriptionType']['name'] in ['data','assetData']:
                 print(response['list'][0]['dataSourceAddress']['did'],  end='-')
                 print(response['list'][0]['dataSourceAddress']['variableName']['name'], end='-')
+                if response['list'][0]['list'][0]['resourceType'] == 'SampleAsset':
+                    # if 'name' in response['list'][0]['list'][0]['assetState']:
+                    print(response['list'][0]['list'][0]['assetState']['name'])
+                elif response['list'][0]['list'][0]['resourceType'] == 'SampleUtilization':
+                    print('free', response['list'][0]['list'][0]['free'], 'occu:', response['list'][0]['list'][0]['occupied'])
+            
+                elif response['list'][0]['list'][0]['resourceType'] == 'SampleUpState':
+                    print( response['list'][0]['list'][0]['deviceUpState'], 'occu:', response['list'][0]['list'][0]['occupied'])
                 # print(response['list'][0]['list'][0]['value'],'\n ')
                 # print(response['list'][0]['list'][0]['assetState']['name'])
                 # for 
-                print((response['list'][0]['list'][0]['value'] if 'value' in response['list'][0]['list'][0] else \
-                    response['list'][0]['list'][0]['assetState']['name']))
+                else: 
+                   print(response['list'][0]['list'][0]['value'])
             elif response['subscriptionType']['name'] == 'battery':
                 print(response['list'][0]['dataSourceAddress']['did'], end='-')
                 print(response['list'][0]['list'][0]['value'], end='-')
@@ -162,7 +173,14 @@ def onMessage(ws, message):
                 print(response['list'][0]['list'][0]['aggregateValue'])
             elif response['subscriptionType']['name'] =='occupancy':
                 print(response['list'][0]['dataSourceAddress']['did'], end='-')
-                print(response['list'][0]['list'][0]['assetState']['name'])
+                if response['list'][0]['list'][0]['resourceType'] == 'SampleAsset':
+                # if 'name' in response['list'][0]['list'][0]['assetState']:
+                    print(response['list'][0]['list'][0]['assetState']['name'])
+                elif response['list'][0]['list'][0]['resourceType'] == 'SampleUtilization':
+                    print('free', response['list'][0]['list'][0]['free'], 'occu:', response['list'][0]['list'][0]['occupied'])
+                # elif response['list'][0]['list'][0]['resourceType'] == 'SampleAsset':
+                #     print('free:',response['list'][0]['list'][0]['assetState']['free'])
+
             else:
 
                 pprint(response)

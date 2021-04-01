@@ -48,7 +48,7 @@ locationID = "74365"  # kerry
 startstr = '2021-03-08-09-00-00'
 endstr = '2021-03-12-17-59-59'
 datatype = 'Motion'  # Motion | UUID  #选择要采的数据类型
-timeGrid='30T' #统计间隔 30T 是30分钟
+timeGrid='30T' #!!统计间隔 30T 是30分钟 这个不会被调度程序传入而覆盖
 
 
 
