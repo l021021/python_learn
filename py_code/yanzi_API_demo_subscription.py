@@ -97,15 +97,15 @@ def onMessage(ws, message):
             sendSubscribeRequest(locationID,[
                 # 'lifecycle',
                                             #  'config',
-                                             'data',
+                                            #  'data',
                                             #  'assetSlots',
                                             #  'occupancy',
                                             #  'battery',
                                             #  'sensorData',
-                                            #  'sensorSlots',
-                                             'assetData'
+                                             'sensorSlots',
+                                            #  'assetData'
                                              
-                                            #  ,'occupancySlots'
+                                            #  'occupancySlots'
                                              ]) #
             sendPeriodicRequest()
         else:
@@ -133,7 +133,7 @@ def onMessage(ws, message):
                     print('free', response['list'][0]['list'][0]['free'], 'occu:', response['list'][0]['list'][0]['occupied'])
             
                 elif response['list'][0]['list'][0]['resourceType'] == 'SampleUpState':
-                    print( response['list'][0]['list'][0]['deviceUpState'], 'occu:', response['list'][0]['list'][0]['occupied'])
+                    print(response['list'][0]['list'][0]['deviceUpState']['name'])
                 # print(response['list'][0]['list'][0]['value'],'\n ')
                 # print(response['list'][0]['list'][0]['assetState']['name'])
                 # for 
@@ -151,14 +151,15 @@ def onMessage(ws, message):
       
             elif response['subscriptionType']['name'] =='occupancySlots':
                 print(response['list'][0]['dataSourceAddress']['did'], end='-')
-                print(response['list'][0]['list'][0]['sample']['assetState']['name'])
+                print(response['list'][0]['list'][0]['sample']['assetState']['name'], response['list'][0]['list'][0]['slotSize']['name'])
             elif response['subscriptionType']['name'] =='lifecycle':
                 print(response['list'][0]['eventType']['name'], end='-')
                 print(response['list'][0]['unitAddress']['did'])
                 # print(response['list'][0]['list'][0]['deviceUpState']['name'])
             elif response['subscriptionType']['name'] =='sensorSlots':
-                print(response['list'][0]['dataSourceAddress']['did'], end='-')
-                print(response['list'][0]['list'][0]['aggregateValue'], end='-')
+                print(response['list'][0]['dataSourceAddress']['did'][12:], end='-')
+                print('Aggre:',response['list'][0]['list'][0]['aggregateValue'],'in ',response['list'][0]['list'][0]['numberOfValues'],
+                'periods of ',response['list'][0]['list'][0]['slotSize']['name'])
             # elif response['subscriptionType']['name'] =='occupancy':
                 
             #     print(response['list'][0]['dataSourceAddress']['did'])
