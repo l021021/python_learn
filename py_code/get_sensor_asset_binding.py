@@ -177,7 +177,7 @@ def GetUnitPropertyRequest(locationId, did, propertyName):
 #     print("Error", error)
 
 
-#TODO
+#
 def setDisplayFlag(locationId, did, displayFlag):
     request_data = {
         "messageType": "SetCustomPropertyRequest",
