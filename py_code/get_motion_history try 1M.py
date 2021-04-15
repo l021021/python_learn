@@ -22,6 +22,7 @@ from pprint import pprint
 from time import sleep
 from threading import Timer
 import numpy as np
+from numpy.lib.function_base import gradient
 import pandas as pd
 import websocket
 cirrusHost = "cirrus.ifangtang.net"
@@ -45,10 +46,18 @@ locationID = "74365"  # kerry
 # locationID = "725728"  # yuanjin5
 # locationID = "503370"  # 万科
 
-startstr = '2021-03-08-09-00-00' #!!这些参数会被传入的参数替代
-endstr = '2021-03-12-17-59-59'
-datatype = 'Motion'  # Motion | UUID  #选择要采的数据类型
-timeGrid='30T' #!!统计间隔 30T 是30分钟 这个不会被调度程序传入而覆盖
+startstr = '2021-04-01-00-00-00' #!!这些参数会被传入的参数替代
+endstr = '2021-04-11-23-59-59'
+datatype = 'UUID'  # Motion | UUID  #选择要采的数据类型
+
+"""!! 采集何种数据和粒度:UUID和MOTION 相差可能有几十倍, 而不同的粒度,计算差异不大,但是对生成的数据差异较大
+    建议大部分情况下,UUID/15分钟
+    特殊需要 Motion/1分钟
+
+"""
+gran=15
+timeGrid=str(gran)+'T' #!!统计间隔 30T 是30分钟 这个不会被调度程序传入而覆盖
+
 
 
 
@@ -107,7 +116,8 @@ def calOccupancy():
     max = enddt 
     
     #!!开始的格子设为5分钟整份,结束的格子是结束之后五分钟
-    Gridlist = pd.date_range(min.replace(microsecond=0, second=0, minute=min.minute//5*5), max+pd.DateOffset(minutes=5), freq='5T') #TODO 5T
+    Gridlist = pd.date_range(min.replace(microsecond=0, second=0, minute=min.minute//gran*gran), 
+                             max+pd.DateOffset(minutes=5), freq=timeGrid) 
 
     Gridlist = pd.DataFrame(Gridlist, columns=['TIME'])
 
@@ -143,7 +153,6 @@ def calOccupancy():
 
       
         # 把value转变成free/occupied
-        #TODO 重复发送相同VALUE,需要验证!
         if datatype == "Motion":
             for i in range(1, len(data1)):
                 if data1[i][1] == data1[i-1][1]:
@@ -188,7 +197,7 @@ def calOccupancy():
         # biglist = biglist.values.tolist()
         # print(biglist.shape[0])
         # post :要写进数据的时间格子
-        for i in range(biglist.shape[0]):
+        for i in range(biglist.shape[0]):   #! 循环内不应该有print
             event = biglist.iloc[i, 1]
             stamp = biglist.iloc[i, 2]  # 事件时间戳
 
@@ -199,28 +208,27 @@ def calOccupancy():
                     #                 Gridresult.at[post,'occ']= 0.0000 #写入后一个格子
                     if pd.isna(Gridresult.at[post, 'PCT']):
                         Gridresult.at[post, 'PCT'] = 0.0
-                        # print('    continue 0 ', post, Gridresult.at[post, 'occ'])
+                        # print('    continue 0 ', post, Gridresult.at[post, 'PCT'])
 
                 elif flag == 'occupied':
                     if pd.isna(Gridresult.at[post, 'PCT']):
                         Gridresult.at[post, 'PCT'] = 1.0
-                        # print('    continue 1 ', post, Gridresult.at[post, 'occ'])
+                        # print('    continue 1 ', post, Gridresult.at[post, 'PCT'])
 
             else:   # !!说明这是一个事件
                 # print(stamp, event, end='..')
-                post = stamp.replace(microsecond=0, second=0, minute=stamp.minute//5*5)  # 记入格子:就是前一个整五分
+                post = stamp.replace(microsecond=0, second=0, minute=stamp.minute//gran*gran)  # 记入格子:就是前一个整五分
                 #防止有异常的记录,是在时间范围之外的
                 if post<min:
                     post=min
                     
-                nextp = post+pd.DateOffset(minutes=5)
-                offset = float((nextp-stamp).seconds/300)
+                nextp = post+pd.DateOffset(minutes=gran)#!
+                offset = float((nextp-stamp).seconds/(60*gran))#!
                 if event == 'free':
                     if pd.isna(Gridresult.at[post, 'PCT']): #!!如果有记录在start和end之外.造成POST出没有记录,会报错
                         Gridresult.at[post, 'PCT'] = 1.0
                         # print('-- 1.0 assumed', post, Gridresult.at[post, 'PCT'])
 
-                    # print('  !!!    ', event, stamp, post, nextp, -offset)
                     offset = -offset
                     flag = 'free'
         #             offset=stamp-post
@@ -230,27 +238,23 @@ def calOccupancy():
                         Gridresult.at[post, 'PCT'] = 0.0
                         # print('-- 0.0 assumed', post, Gridresult.at[post, 'PCT'])
 
-                    # print('  ???  ',       event, stamp, post, nextp, -offset)
                     flag = 'occupied'
+                # print( post, nextp, offset)
                     #             要在post的格子里面加上offset部分
                 # print(' -- was', post, Gridresult.at[post, 'PCT'], offset)
                 Gridresult.at[post, 'PCT'] = float(offset+Gridresult.at[post, 'PCT']) if (Gridresult.at[post, 'PCT']+offset) > 0 else 0.0000
                 # print(' -- now recorded', post, Gridresult.at[post, 'PCT'])
 
-        # print(Gridresult.info())
-        # # Gridresult = Gridresult[Gridresult.occ >= 0]
-        # filter= [Gridresult['PCT'] >= 0.5]
-        # Gridresult.reset_index()
-
+        
         Gridresult = Gridresult[Gridresult['TIME'] >= startdt]
         Gridresult = Gridresult[Gridresult['TIME'] <= enddt]
         Grid = Gridresult
         # Grid= Grid[Grid[]<=enddt]
 
         Grid.set_index('TIME', inplace=True)
-        #!! 重取样
-        if timeGrid!='5T':
-            Grid = Grid.resample(timeGrid, axis=0).mean()
+        # #!! 重取样 重取样的意义不大,因为直接机损的差异不大
+        # if timeGrid!='5T':
+        #     Grid = Grid.resample(timeGrid, axis=0).mean()
         Grid['ID'] = id
         
         # Grid.plot()
@@ -258,6 +262,7 @@ def calOccupancy():
         Grid.to_csv(filename, header=CSVheader, mode='a+')
         CSVheader = False
     print('Calculation finished,check file :',filename)
+    print(datetime.now())
     sys.exit(0)
     
 
@@ -517,10 +522,10 @@ def get_motion_history(location_id='', start_str='', end_str='', data_type=''):
         (time.mktime(time.strptime(startstr, patternr))))
     enddt = datetime.fromtimestamp((time.mktime(time.strptime(endstr, patternr))))
 
-    print('Serving request:',location_id, start_str, end_str, data_type, '\n')
-    print('default:',locationID, startstr, endstr, datatype, filename, filename1)
+    print(datetime.now(),'Serving request:', location_id, start_str, end_str, data_type, '\n')
+    print('while local config are:',locationID, startstr, endstr, datatype, filename, filename1)
 
-    print(datetime.now(), " Connecting to ",
+    print(" Connecting to ",
           cirrusHost, "with user ", username)
     ws = websocket.WebSocketApp("wss://" + cirrusHost + "/cirrusAPI",
                                 on_message=onMessage, on_close=onClose, on_open=onOpen, keep_running=True)
@@ -529,6 +534,7 @@ def get_motion_history(location_id='', start_str='', end_str='', data_type=''):
    
 if __name__ == "__main__":
     get_motion_history()
+    print(datetime.now(),'Finished')
     os._exit(0)
 
 
