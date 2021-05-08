@@ -8,6 +8,9 @@
 
 """
 
+
+
+
 import csv
 import json
 import ssl
@@ -17,24 +20,23 @@ from collections import deque
 from datetime import datetime, timedelta
 import pandas as pd
 from pprint import pprint
+from pandas.io.pytables import AppendableMultiSeriesTable
 
 import websocket
 
 
 # The cirrus host to connect to:
-cirrusHost = "cirrus20.yanzi.se"
+cirrusHost = "cirrus.ifangtang.net"
 
-# Change the username and password to the Yanzi credentials:
-username = 'frank.shen@pinyuaninfo.com'
-password = 'Ft@Sugarcube99'
 
-# locationID = "879448"  # snf
-# locationID = "655623"
+# The cirrus host to connect to:
+username = 'frank.shen@sugarinc.cn'
+password = 'iFangtang#899'
+
+locationID = "573742" #ft
 # locationID = "74365"  # kerry
 
-# locationID = "229349"  # ft
-# locationID = "521209"  # wf
-locationID = "879448"  # snf
+# locationID = "879448"  # snf
 
 datalists = []
 sensorList = dict()
@@ -44,8 +46,11 @@ msgQue = deque()
 count = 0
 sessionId = ''
 
-
-
+names = pd.read_csv('C:\\LOG\\573742_ft_传感器_名称.csv', encoding='utf-8', index_col='NAME1')
+namedict = dict()
+for index, row in names.iterrows():
+    namedict[index] = row
+print(namedict)
 def onMessage(ws, message):
     global rt
     response = json.loads(message)
@@ -73,20 +78,25 @@ def onMessage(ws, message):
  
     
     elif response["messageType"] == "GetUnitsResponse":
-        print("Requesting for records:")
+        # print("Requesting for Units DATA:")
         unitslist = response['list']
         # pprint(unitslist)
         for unit in unitslist:
-            # if 'UUID' in unit['unitAddress']['did'] and 'nameSetByUser' in unit:
-            if 'nameSetByUser' in unit:
+            if 'UUID' in unit['unitAddress']['did'] and 'nameSetByUser' in unit:
+            # if 'nameSetByUser' in unit:
                 sensorList[unit['unitAddress']['did']]=unit['nameSetByUser']
+                # print(unit['nameSetByUser'])
+                # print(unit['nameSetByUser'].replace('"', ''))
+                if unit['nameSetByUser'].replace('"','') in namedict:
+                    print(unit['unitAddress']['did'], namedict[unit['nameSetByUser'].replace('"', '')]['NAME'])
+                    setUnitLogicName(locationID, unit['unitAddress']['did'], namedict[unit['nameSetByUser'].replace('"', '')]['NAME'])
         if len(sensorList)>0 :
             list=pd.DataFrame.from_dict(sensorList,orient='index',columns=['NAME'])
             
             list.sort_values(by='NAME',inplace = True)
             pprint(list)        
-            list.to_csv('C:\\LOG\\'+locationID+'_name.csv',mode='w',encoding='utf-8')
-            sys.exit(-1)
+            # list.to_excel('C:\\LOG\\'+locationID+'_name.xls',mode='w',encoding='utf-8')
+            sys.exit(1) 
 
 
 
@@ -106,6 +116,23 @@ def sendGetUnitsRequest(passLoc):
     sendMessage(request)
 
 
+def setUnitLogicName(locationId, did, logicName):
+    print('renaming',did,logicName)
+    request_data = {
+        "messageType": "SetUnitPropertyRequest",
+        "unitAddress": {
+            "resourceType": "UnitAddress",
+            "did": did,
+            "locationId": locationId
+        },
+        "unitProperty": {
+            "resourceType": "UnitProperty",
+            "name": "logicalName",
+            "value": logicName
+        }
+    }
+
+    sendMessage(request_data)
 
 
 def onClose(ws):

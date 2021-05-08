@@ -1,7 +1,23 @@
 #!/usr/bin/env python
 # coding: utf-8
+#!! 按照config.csv的对照表,改写地图里面的设定名称,对照表里面是按照顺序的
+#!! 同时生成新的UUID,以免重复
+#!! 写入新文件 Newmap
+
+""" sample csv file
+NO, Name
+1, FANGTANG
+2, desk1
+3, desk2
+4, desk3
+5, desk4
+6, desk5
+7, desk6
+
+"""
 
 
+###
 import json
 import pandas as pd
 import uuid

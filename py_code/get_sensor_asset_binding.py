@@ -22,6 +22,8 @@ from pprint import pprint
 import websocket
 from threading import Timer
 
+
+#TODO 解决""的问题
 locationID = "573742"  # ft
 # locationID = "252208"
 # locationID = "74365"  # kerry
@@ -126,9 +128,9 @@ def onMessage(ws, message):
                 if 'value' in response['list'][0]:
                     #把配置时自定的Asset名字写到asset和对应的传感器,并配置到live
                     assetList[response['unitAddress']['did']] = response['list'][0]['value']
-                    sensorList[response['unitAddress']['did']][1] = response['list'][0]['value']
-                    # setUnitLogicName(locationID, response['unitAddress']['did'], sensorList[response['list'][0]['value']][0])  # 传感器名字
-                    # print('renaming sensor name to asset name for ', response['unitAddress']['did'])
+                    sensorList[response['unitAddress']['did']][1] = response['list'][0]['value'] # 1: assetID
+                    setUnitLogicName(locationID, response['unitAddress']['did'], sensorList[response['list'][0]['value']][0].replace('"',''))  # 传感器逻辑名字
+                    print('renaming sensor name to asset name for ', response['unitAddress']['did'])
         
                     # sensorList[response['unitAddress']['did']][2] = response['list'][0]['value'] #asset名字
     
@@ -139,7 +141,7 @@ def onMessage(ws, message):
             # if 'UUID' in unit['unitAddress']['did'] and 'nameSetByUser' in unit:
             # pprint(unit)
             if 'nameSetByUser' in unit:
-                sensorList[unit['unitAddress']['did']] = ['"'+unit['nameSetByUser']+'"', '',''] #分别是传感器名字,资产名字,对应的UUID
+                sensorList[unit['unitAddress']['did']] = [unit['nameSetByUser'].replace('"',''), '',''] #分别是传感器名字,资产名字,对应的UUID
                 if unit['unitAddress']['did'].find('EU') != -1:  # 对物理传感器获取资产名字
                     GetUnitPropertyRequest(locationID, unit['unitAddress']['did'],'assetParentId')
                     
@@ -218,17 +220,17 @@ def showResult():
     # print(datetime.now()," 30 seconds to close job")
     if len(sensorList) > 0:
         for k,v in sensorList.items():
-            if k.find('EU')!=-1:
+            if k.find('EU')!=-1:  # 改sensor的名字
                 # print(k,'--',v,end='----\n')
                 # print('key',k,'0:',v[0],'1:',v[1],'2:',v[2])
-                if v[1] in sensorList:
-                    v[2]=sensorList[v[1]][0]
+                if v[1] in sensorList:  #对应的ASSET
+                    v[2]=sensorList[v[1]][0].replace('"','') #用ASSET 名字来改sensor的名字
                 # print(v[2], 'xxx', sensorList[v[1]][1])
-        list = pd.DataFrame.from_dict(sensorList, orient='index', columns=['NAME', 'ASSET','NAME1'])
+        list = pd.DataFrame.from_dict(sensorList, orient='index', columns=['SENSOR_NAME', 'ASSET','ASSET_NAME'])
 
-        list.sort_values(by='NAME', inplace=True)
+        list.sort_values(by='ASSET_NAME', inplace=True)
         # list.describe()
-        list=list[list.ASSET!='']
+        list=list[list.ASSET!=''] #删掉ASSET 记录
         # list.remove( lambda x:x.ASSET='')
         pprint(list)
         list.to_excel('C:\\LOG\\'+locationID+'_name.xls',sheet_name='sheet1', encoding='utf-8')
