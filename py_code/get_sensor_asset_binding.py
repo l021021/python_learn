@@ -23,7 +23,6 @@ import websocket
 from threading import Timer
 
 
-#TODO 解决""的问题
 locationID = "573742"  # ft
 # locationID = "252208"
 # locationID = "74365"  # kerry

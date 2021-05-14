@@ -34,7 +34,7 @@ password = 'iFangtang#899'
 # locationID = "879448"  # snf
 # locationID = "655623"
 # locationID = "74365"  # kerry
-# locationID = "573742"  # ft
+# locationID = "229349"  # ft
 # locationID = "521209"  # wf
 # locationID = "797296"  # nf
 
@@ -45,14 +45,10 @@ locationID = "834706"  # yuanjin2
 # locationID = "725728"  # yuanjin5
 # locationID = "503370"  # 万科
 
-startstr = '2021-02-21-00-00-00'
-endstr = '2021-04-14-10-22-59'
-datatype = 'UPLOG'  # Motion | UUID  #选择要采的数据类型
-# UnitDiD = 'EUI64-D0CF5EFFFE7B2962'
-UnitDiD = 'EUI64-90FD9FFFFEA78A20'
-# UnitDiD = 'EUI64-90FD9FFFFEA95281'
-
-# timeGrid='30T' #统计间隔 30T 是30分钟
+startstr = '2021-03-22-09-00-00'
+endstr = '2021-04-15-17-59-59'
+datatype = 'Motion'  # Motion | UUID  #选择要采的数据类型
+timeGrid='30T' #统计间隔 30T 是30分钟
 
 
 
@@ -60,10 +56,7 @@ UnitDiD = 'EUI64-90FD9FFFFEA78A20'
 程序部分
 """
 CSVheader = True
-# splitDays = 20 if datatype == 'UUID' else 1
-splitDays = 10 ##!!  for uplog only
-
-
+splitDays = 20 if datatype == 'UUID' else 1
 filename = "C:\\LOG\\"+locationID+"_"+startstr+"_"+endstr+'_'+datatype+"_PCT.csv"
 filename1 = "C:\\LOG\\"+locationID+"_"+startstr+"_"+endstr+'_'+datatype+"_RAW.csv"
 
@@ -75,7 +68,7 @@ startdt = datetime.fromtimestamp(
 enddt = datetime.fromtimestamp((time.mktime(time.strptime(endstr, patternr))))
 
 datalists = []
-recordList = [] # motion记录数组,包含ID 时间戳 时间
+motionRecordList = [] # motion记录数组,包含ID 时间戳 时间
 requestcount = 0
 HBFlag = 0
 msgQue = deque()
@@ -84,9 +77,9 @@ ws=websocket
 
 
 
-def recordToFile():
+def calOccupancy():
     global CSVheader, startdt, enddt
-    data = pd.DataFrame(recordList, columns=['ID', 'EVENT', 'TIME'])
+    data = pd.DataFrame(motionRecordList, columns=['ID', 'EVENT', 'TIME'])
     data.to_csv(filename1,index=None)
     data['TIME'] = pd.to_datetime(data['TIME'])
     data['flag'] = '' #加入第三列,作为以后处理的标志位
@@ -265,6 +258,20 @@ def recordToFile():
     sys.exit(0)
     
 
+def sendPeriodicRequest():
+    global HBFlag
+    request = {"messageType": "PeriodicRequest",
+               "timeSent": int(time.time() * 1000)}
+    HBFlag += 1
+    if HBFlag >= 3:
+        print('(', HBFlag, 'periodic request sent )')
+        print('Should disconnect ')  # !!
+
+    else:
+        print('(', HBFlag, 'periodic request missed )')
+    sendMessage(request)
+
+
 
 def onMessage(ws, message):
     global rt
@@ -280,18 +287,41 @@ def onMessage(ws, message):
         sendLoginRequest()
     elif response["messageType"] == "LoginResponse":
         if (response['responseCode']['name'] == 'success'):
-            # sendGetUnitsRequest(locationID)
-            sendGetSamplesRequest(UnitDiD,locationID,startdt,enddt )
+            sendGetUnitsRequest(locationID)
+            sendPeriodicRequest()
         else:
-            print('Login Failed ')
             sys.exit(0)
-             
+    elif response["messageType"] == "PeriodicResponse":
+        HBFlag = 0
+        print("( periodic response rcvd )")
+        # rt.start()
+
+    elif response["messageType"] == "SubscribeData":
+        print('  Subscription     :', response)
+        # print("onMessage: Got SubscribeData")
+    elif response["messageType"] == "GetUnitsResponse":
+        print("Requesting for records:")
+        unitslist = response['list']
+        # pprint(unitslist)
+        if datatype=='UUQID':
+            for unit in unitslist:
+                if 'UUID' in unit['unitAddress']['did']:
+                    sendGetSamplesRequest(
+                        unit['unitAddress']['did'], locationID, startdt, numberOfSamplesBeforeStart=1)  #注意修改
+                    sendGetSamplesRequest(
+                        unit['unitAddress']['did'], locationID, startdt, enddt)
+        elif datatype=='Motion':
+            for unit in unitslist:
+                if 'Motion' in unit['unitAddress']['did'] and unit['unitAddress']['did']=='EUI64-90FD9FFFFEA78A20-3-Motion':
+                    sendGetSamplesRequest(
+                        unit['unitAddress']['did'], locationID, startdt, numberOfSamplesBeforeStart=1)
+                    sendGetSamplesRequest(
+                        unit['unitAddress']['did'], locationID, startdt, enddt)
+           
     elif response["messageType"] == "GetSamplesResponse":
         requestcount = requestcount - 1
         """处理了返回列表中list不存在的情况,这是因为时间段内没有事件
         """
-        # pprint(response)
-        
         if (response['responseCode']['name'] == 'success') and ('list' in response['sampleListDto']):  # response['responseCode']['name']
             datalists = response['sampleListDto']['list']
             global count
@@ -300,26 +330,18 @@ def onMessage(ws, message):
             for li in datalists:
                 eventtime = datetime.fromtimestamp(
                     int(li['sampleTime']/1000)).strftime(patternw)
-                if li['resourceType'] == "SampleAsset": ##! 
-                    recordList.append([response['sampleListDto']['dataSourceAddress']
+                if li['resourceType'] == "SampleAsset":
+                    motionRecordList.append([response['sampleListDto']['dataSourceAddress']
                                     ['did'], li['assetState']['name'], eventtime])
                 elif li['resourceType'] == 'SampleMotion':
-                    # print(response['sampleListDto']['dataSourceAddress']['did'], eventtime, li['value'])
-                    recordList.append([response['sampleListDto']['dataSourceAddress']
+                    print(response['sampleListDto']['dataSourceAddress']['did'], eventtime, li['value'])
+                    motionRecordList.append([response['sampleListDto']['dataSourceAddress']
                                     ['did'], li['value'], eventtime])
-                elif li['resourceType'] == 'SampleUpState':
-                        # print(response['sampleListDto']['dataSourceAddress']['did'], eventtime, li['value'])
-                    recordList.append([response['sampleListDto']['dataSourceAddress']
-                                       ['did'], li['deviceUpState']['name'], eventtime])
-                    
-                    print([response['sampleListDto']['dataSourceAddress']
-                     ['did'], li['deviceUpState']['name'], eventtime])
-                    # pprint(recordList)
         if requestcount == 0:
             print('\n', datetime.now(), ' >>>>Historical data retrieved<<<<')
             ws.close()
             # rt.stop()
-            recordToFile()
+            calOccupancy()
             sys.exit(0)
     else:
         print(response)
@@ -415,13 +437,8 @@ def sendGetSamplesRequest(UnitDid, LocationId, start, end='', numberOfSamplesBef
                 "dataSourceAddress": {
                     "resourceType": "DataSourceAddress",
                     "did": UnitDid,
-                    "locationId": LocationId,
-                    "variableName": {
-                        "resourceType": "VariableName",
-                        "name": "uplog"
-                    }
+                    "locationId": LocationId
                 },
-              
                 "timeSerieSelection": {
                     "resourceType": "TimeSerieSelection",
                     # "numberOfSamplesBeforeStart": 3,
@@ -475,7 +492,7 @@ def delfile(filename):
 def get_motion_history(location_id='', start_str='', end_str='', data_type=''):
     #可以带参数进来,否则就默认是文件头的location,start...
 
-    global locationID, startstr, endstr, datatype, ws, filename, filename1,startdt,enddt,datatype
+    global locationID, startstr, endstr, datatype, ws, filename, filename1,startdt,enddt
     if location_id != '':
         locationID = location_id
     if start_str != '':
