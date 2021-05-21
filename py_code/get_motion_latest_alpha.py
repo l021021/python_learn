@@ -46,8 +46,8 @@ locationID = "797296"  # nf
 # locationID = "725728"  # yuanjin5
 # locationID = "503370"  # 万科
 
-startstr = '2021-01-01-00-00-00' #!!这些参数会被传入的参数替代
-endstr = '2021-03-31-23-59-59'
+# startstr = '2021-01-01-00-00-00' #!!这些参数会被传入的参数替代
+# endstr = '2021-03-31-23-59-59'
 datatype = 'UUID'  # Motion | UUID  #选择要采的数据类型
 
 """!! 采集何种数据和粒度:UUID和MOTION 相差可能有几十倍, 而不同的粒度,计算差异不大,但是对生成的数据差异较大
@@ -66,15 +66,15 @@ timeGrid=str(gran)+'T' #!!统计间隔 30T 是30分钟 这个不会被调度程�
 """
 CSVheader = True
 splitDays = 20 if datatype == 'UUID' else 1
-filename = "C:\\LOG\\"+locationID+"_"+startstr+"_"+endstr+'_'+datatype+'_'+timeGrid+"_PCT.csv"
-filename1 = "C:\\LOG\\"+locationID+"_"+startstr+"_"+endstr+'_'+datatype+'_'+timeGrid+"_RAW.csv"
+# filename = "C:\\LOG\\"+locationID+"_"+startstr+"_"+endstr+'_'+datatype+'_'+timeGrid+"_PCT.csv"
+filename1 = "C:\\LOG\\"+locationID+"_"+str(datetime.now())+'_'+datatype+'_'+"_RAW.csv"
 
 patternr = '%Y-%m-%d-%H-%M-%S'
 patternw = '%Y-%m-%d %H:%M:%S'
 
-startdt = datetime.fromtimestamp(
-    (time.mktime(time.strptime(startstr, patternr))))
-enddt = datetime.fromtimestamp((time.mktime(time.strptime(endstr, patternr))))
+# startdt = datetime.fromtimestamp(
+#     (time.mktime(time.strptime(startstr, patternr))))
+# enddt = datetime.fromtimestamp((time.mktime(time.strptime(endstr, patternr))))
 
 datalists = []
 motionRecordList = [] # motion记录数组,包含ID 时间戳 时间
@@ -86,185 +86,6 @@ ws=websocket
 
 
 
-def calOccupancy():
-    global CSVheader, startdt, enddt
-    data = pd.DataFrame(motionRecordList, columns=['ID', 'EVENT', 'TIME'])
-    data.to_csv(filename1,index=None)
-    data['TIME'] = pd.to_datetime(data['TIME'])
-    data['flag'] = '' #加入第三列,作为以后处理的标志位
-    
-    #!删除单个记录的传感器:可能是已删除的传感器
-    data = pd.concat([data, data.drop_duplicates('ID', keep=False)]).drop_duplicates(keep=False)
-    
-    
-    #!解决数据中时间记录早于设定的起点的问题
-    startdt1=np.datetime64(startdt)
-    data['TIME'] =np.where(data['TIME']>startdt1,data['TIME'],startdt1)
-    
-    print('Total history records:', len(data))
-
-    # 建立时间轴
-    # 根据数据生成目标时间格子
-    
-    
-    # #取尽量大的事件间隔，保证数据没有空洞
-    # min = startdt if startdt < data['TIME'].min() else data['TIME'].min()  
-    # max = enddt if enddt > data['TIME'].max() else data['TIME'].max()  
-    
-    #！！！ 如果有传感器长期掉线，上面的计算会导致起始日期很长！！！则采用下面的方式
-    min = startdt 
-    max = enddt 
-    
-    #!!开始的格子设为5分钟整份,结束的格子是结束之后五分钟
-    Gridlist = pd.date_range(min.replace(microsecond=0, second=0, minute=min.minute//gran*gran), 
-                             max+pd.DateOffset(minutes=5), freq=timeGrid) 
-
-    Gridlist = pd.DataFrame(Gridlist, columns=['TIME'])
-
-    # 数据处理
-
-    # 建立ID列表
-    IDSet = set(data['ID'].values)
-
-    # 每个ID循环处理
-    for id in IDSet:
-        
-        print('\nProcessing ', id)
-        data_per_ID = data[data.ID == id]
-        data1 = data_per_ID.values.tolist()
-        
-        print('raw records:', len(data1))
-        if len(data1) < 2: 
-            print('dead sensor, skiped ')
-            continue
-        # 删除MS数据
-        for i in range(1, len(data1)-1):
-            if data1[i][1] == 'missingInput':  # 检查event是否为ms
-                data1[i][3] = 'x'
-
-        data1 = list(filter(lambda x: x[3] != 'x', data1))
-        print('after ms records deleted:', len(data1))
-
-        # !按照时间排序
-
-        def takeSecond(elem):
-            return elem[2]
-        data1.sort(key=takeSecond)
-
-      
-        # 把value转变成free/occupied
-        if datatype == "Motion":
-            for i in range(1, len(data1)):
-                if data1[i][1] == data1[i-1][1]:
-                    data1[i][3] = 'free'
-                else:
-                    data1[i][3] = 'occupied'
-            data1[0][3] = 'free' 
-            #[3]是临时存放,结束之后写会[1]
-            for i in range(len(data1)):
-                data1[i][1] = data1[i][3]
-        
-        
-        # 删除重复free/occupied数据
-        for i in range(1, len(data1)-1):
-            if data1[i][1] == data1[i-1][1]:
-                data1[i][3] = 'x'
-                
-        data2 = list(filter(lambda x: x[3] != 'x', data1))
-        
-            
-        
-        data3 = pd.DataFrame(data2, columns=['ID', 'Event', 'TIME', 'Flag'])
-        print('after dup records deleted:', len(data3))
-
-        # data3 = data3.sort_values()
-
-        Gridresult = Gridlist.set_index('TIME', drop=False)
-        Gridresult['PCT'] = 0.00
-        print('results in Time grid :', len(Gridresult))
-
-        # 先生成计算需要的时间格子
-        biglist = pd.merge(data3, Gridlist, how='outer')
-
-        print('Target raw records to go:', biglist.shape[0])
-
-        # biglist[pd.isna(biglist['ID'])]
-        biglist.sort_values(by=['TIME'], inplace=True)
-
-        # flag : 前面的状态
-        flag = 'free'  # 初识状态为空
-        Gridresult['PCT'] = np.nan  # 建立空记录
-        # biglist = biglist.values.tolist()
-        # print(biglist.shape[0])
-        # post :要写进数据的时间格子
-        for i in range(biglist.shape[0]):   #! 循环内不应该有print
-            event = biglist.iloc[i, 1]
-            stamp = biglist.iloc[i, 2]  # 事件时间戳
-
-            if pd.isna(event):            # !!说明这是一个插入的格子时间.没有事件,延续当前状态
-                # print('Not event', end='..')
-                post = stamp
-                if flag == 'free':  #
-                    #                 Gridresult.at[post,'occ']= 0.0000 #写入后一个格子
-                    if pd.isna(Gridresult.at[post, 'PCT']):
-                        Gridresult.at[post, 'PCT'] = 0.0
-                        # print('    continue 0 ', post, Gridresult.at[post, 'PCT'])
-
-                elif flag == 'occupied':
-                    if pd.isna(Gridresult.at[post, 'PCT']):
-                        Gridresult.at[post, 'PCT'] = 1.0
-                        # print('    continue 1 ', post, Gridresult.at[post, 'PCT'])
-
-            else:   # !!说明这是一个事件
-                # print(stamp, event, end='..')
-                post = stamp.replace(microsecond=0, second=0, minute=stamp.minute//gran*gran)  # 记入格子:就是前一个整五分
-                #防止有异常的记录,是在时间范围之外的
-                if post<min:
-                    post=min
-                    
-                nextp = post+pd.DateOffset(minutes=gran)#!
-                offset = float((nextp-stamp).seconds/(60*gran))#!
-                if event == 'free':
-                    if pd.isna(Gridresult.at[post, 'PCT']): #!!如果有记录在start和end之外.造成POST出没有记录,会报错
-                        Gridresult.at[post, 'PCT'] = 1.0
-                        # print('-- 1.0 assumed', post, Gridresult.at[post, 'PCT'])
-
-                    offset = -offset
-                    flag = 'free'
-        #             offset=stamp-post
-        #             要在post的格子里面减去offset部分
-                elif event == 'occupied':
-                    if pd.isna(Gridresult.at[post, 'PCT']):
-                        Gridresult.at[post, 'PCT'] = 0.0
-                        # print('-- 0.0 assumed', post, Gridresult.at[post, 'PCT'])
-
-                    flag = 'occupied'
-                # print( post, nextp, offset)
-                    #             要在post的格子里面加上offset部分
-                # print(' -- was', post, Gridresult.at[post, 'PCT'], offset)
-                Gridresult.at[post, 'PCT'] = float(offset+Gridresult.at[post, 'PCT']) if (Gridresult.at[post, 'PCT']+offset) > 0 else 0.0000
-                # print(' -- now recorded', post, Gridresult.at[post, 'PCT'])
-
-        
-        Gridresult = Gridresult[Gridresult['TIME'] >= startdt]
-        Gridresult = Gridresult[Gridresult['TIME'] <= enddt]
-        Grid = Gridresult
-        # Grid= Grid[Grid[]<=enddt]
-
-        Grid.set_index('TIME', inplace=True)
-        # #!! 重取样 重取样的意义不大,因为直接机损的差异不大
-        # if timeGrid!='5T':
-        #     Grid = Grid.resample(timeGrid, axis=0).mean()
-        Grid['ID'] = id
-        
-        # Grid.plot()
-
-        Grid.to_csv(filename, header=CSVheader, mode='a+')
-        CSVheader = False
-    print('Calculation finished,check file :',filename)
-    print(datetime.now())
-    sys.exit(0)
-    
 
 def sendPeriodicRequest():
     global HBFlag
@@ -313,11 +134,11 @@ def onMessage(ws, message):
         # !! 根据返回的清单,诸葛发出调用历史数据的接口
         if datatype=='UUID':
             for unit in unitslist:
-                if 'UUID' in unit['unitAddress']['did']:
+                if 'UUID' in unit['unitAddress']['did']:  #! 只取前一条
                     sendGetSamplesRequest(
-                        unit['unitAddress']['did'], locationID, startdt, numberOfSamplesBeforeStart=1)  #返回一个开发之前的数据,满足计算所需的边界!
-                    sendGetSamplesRequest(
-                        unit['unitAddress']['did'], locationID, startdt, enddt)
+                        unit['unitAddress']['did'], locationID, datetime.now(), numberOfSamplesBeforeStart=1)  #返回一个开发之前的数据,满足计算所需的边界!
+                    # sendGetSamplesRequest(
+                    #     unit['unitAddress']['did'], locationID, startdt, enddt)
         elif datatype=='Motion':
             for unit in unitslist:
                 if 'Motion' in unit['unitAddress']['did']:
@@ -341,6 +162,8 @@ def onMessage(ws, message):
                 if li['resourceType'] == "SampleAsset":
                     motionRecordList.append([response['sampleListDto']['dataSourceAddress']
                                     ['did'], li['assetState']['name'], eventtime])
+                    print([response['sampleListDto']['dataSourceAddress']
+                           ['did'], li['assetState']['name'], eventtime])
                 elif li['resourceType'] == 'SampleMotion':
                     # print(response['sampleListDto']['dataSourceAddress']['did'], eventtime, li['value'])
                     motionRecordList.append([response['sampleListDto']['dataSourceAddress']
@@ -349,7 +172,7 @@ def onMessage(ws, message):
             print('\n', datetime.now(), ' >>>>Historical data retrieved<<<<')
             ws.close()
             # rt.stop()
-            calOccupancy()
+            # calOccupancy()
             sys.exit(0)
     else:
         print(response)
@@ -511,19 +334,11 @@ def get_motion_history(location_id='', start_str='', end_str='', data_type=''):
        datatype = data_type
        
 
-    filename = "C:\\LOG\\"+locationID+"_"+startstr+"_"+endstr+'_'+datatype+'_'+timeGrid+"_PCT.csv"
-    filename1 = "C:\\LOG\\"+locationID+"_"+startstr+"_"+endstr+'_'+datatype+'_'+timeGrid+"_RAW.csv"
-    
-    delfile(filename)
+    filename1 = "C:\\LOG\\"+locationID+"_"+str(datetime.now())+'_'+datatype+'_'+"_RAW.csv"
     delfile(filename1)
     
 
-    startdt = datetime.fromtimestamp(
-        (time.mktime(time.strptime(startstr, patternr))))
-    enddt = datetime.fromtimestamp((time.mktime(time.strptime(endstr, patternr))))
-
     print(datetime.now(),'Serving request:', location_id, start_str, end_str, data_type, '\n')
-    print('while local config are:',locationID, startstr, endstr, datatype, filename, filename1)
 
     print(" Connecting to ",
           cirrusHost, "with user ", username)

@@ -43,7 +43,8 @@ password = 'iFangtang#899'
 
 locationID = "573742"  # ft
 # locationID = "521209"  # wf
-# locationID = "274189" # sunon 
+# locationID = "274189" # sunon
+locationID = "797296" # 诺梵
 
 requestcount = 0
 HBFlag = 0
@@ -95,14 +96,14 @@ def onMessage(ws, message):
             # sendSubscribeRequest(locationID,['lifecycle']) #
             #!!订阅的数据选项
             sendSubscribeRequest(locationID,[
-                # 'lifecycle',
+                'lifecycle',
                                             #  'config',
                                             #  'data',
                                             #  'assetSlots',
                                             #  'occupancy',
                                             #  'battery',
                                             #  'sensorData',
-                                             'sensorSlots',
+                                            #  'sensorSlots',
                                             #  'assetData'
                                              
                                             #  'occupancySlots'
