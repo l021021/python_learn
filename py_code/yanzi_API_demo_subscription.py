@@ -41,7 +41,7 @@ password = 'iFangtang#899'
 # locationID = "74365"  # kerry
 # locationID = "323602"  # kerry
 
-locationID = "573742"  # ft
+# locationID = "573742"  # ft
 # locationID = "521209"  # wf
 # locationID = "274189" # sunon
 locationID = "797296" # 诺梵
@@ -96,11 +96,11 @@ def onMessage(ws, message):
             # sendSubscribeRequest(locationID,['lifecycle']) #
             #!!订阅的数据选项
             sendSubscribeRequest(locationID,[
-                'lifecycle',
+                # 'lifecycle',
                                             #  'config',
                                             #  'data',
                                             #  'assetSlots',
-                                            #  'occupancy',
+                                             'occupancy',
                                             #  'battery',
                                             #  'sensorData',
                                             #  'sensorSlots',
@@ -177,7 +177,7 @@ def onMessage(ws, message):
                 print(response['list'][0]['dataSourceAddress']['did'], end='-')
                 if response['list'][0]['list'][0]['resourceType'] == 'SampleAsset':
                 # if 'name' in response['list'][0]['list'][0]['assetState']:
-                    print(response['list'][0]['list'][0]['assetState']['name'])
+                    print('SampleAsset:',response['list'][0]['list'][0]['assetState']['name'])
                 elif response['list'][0]['list'][0]['resourceType'] == 'SampleUtilization':
                     print('free', response['list'][0]['list'][0]['free'], 'occu:', response['list'][0]['list'][0]['occupied'])
                 # elif response['list'][0]['list'][0]['resourceType'] == 'SampleAsset':

@@ -2,18 +2,22 @@
 # coding=utf-8
 """
 @author: Bruce
+这个程序示范了利用YANZI API订阅实时数据的用法
+onMessage:说明了如何解析返回的json
+sendPeriodicRequest: 是心跳机制,如果连续收不到心跳回复,则提示连接出错,需要重连(几乎不会发生)
+Que 有关: 自己做的队列,这个程序里面用处不大
+sendSubscribeRequest:说明了如何订阅不同的数据
 
-针对拉取长时间的ASSET
-@TODO: periodic 
+
+
 """
 
-import csv
 import json
 import ssl
 import sys
 import time
 from collections import deque
-from datetime import datetime, timedelta
+from datetime import datetime
 from pprint import pprint
 
 import websocket
@@ -45,9 +49,6 @@ def sendPeriodicRequest():
         print('(', HBFlag, 'periodic request sent )')
         print('Should disconnect ')  # !!
 
-    else:
-        # print('(', HBFlag, 'periodic request missed )'
-        pass
     sendMessage(request)
 
 
@@ -175,47 +176,10 @@ def onMessage(ws, message):
             print('!!!!!!!!!!!!!!!!')
             pprint(response)
         
-    elif response["messageType"] == "GetUnitsResponse":
-        print("Requesting for records:")
-        unitslist = response['list']
-        # pprint(unitslist)
-        for unit in unitslist:
-            if 'UUID' in unit['unitAddress']['did']:
-                sendGetSamplesRequest(
-                    unit['unitAddress']['did'], locationID, startdt, enddt)
-            # if 'Motion' in unit['unitAddress']['did']:
-                # pass
-
-    elif response["messageType"] == "GetSamplesResponse":
-        requestcount = requestcount - 1
-        """处理了返回列表中list不存在的情况,这是因为时间段内没有事件
-        """
-        if (response['responseCode']['name'] == 'success') and ('list' in response['sampleListDto']):  # response['responseCode']['name']
-            datalists = response['sampleListDto']['list']
-            global count
-            count += len(datalists)
-            print(count,  end='>')
-            for li in datalists:
-                eventtime = datetime.fromtimestamp(
-                    int(li['sampleTime']/1000)).strftime(patternw)
-                if li['resourceType'] == "SampleAsset":
-                    csvlist.append([response['sampleListDto']['dataSourceAddress']
-                                    ['did'], li['assetState']['name'], eventtime])
-                elif li['resourceType'] == 'SampleMotion':
-                    print(response['sampleListDto']['dataSourceAddress']
-                          ['did'], eventtime, li['value'])
-        if requestcount == 0:
-            print('\n', datetime.now(), ' Mission Accomplished')
-            writetofile()
-            rt.stop()
-            sys.exit(0)
-    else:
+    
+        else:
         # print(response)
-        pass
-
-
-# def onError(ws, error):
-#     print("Error", error)
+          pass
 
 
 def onClose(ws):
@@ -282,64 +246,7 @@ def sendSubscribeRequest(location_id, datatype):
         # print('      ', request)
 
 
-def setUnitPropertyRequest(locationId, did, name):
-    request_data = {
-        "messageType": "SetUnitPropertyRequest",
-        "unitAddress": {
-            "resourceType": "UnitAddress",
-            "did": did,
-            "locationId": locationId
-        },
-        "unitProperty": {
-            "resourceType": "UnitProperty",
-            "name": "logicalName",
-            "value": name
-        }
-    }
-
     sendMessage(request_data)
-
-
-
-def sendGetUnitsRequest(locationID):
-    request = {"messageType": 'GetUnitsRequest', "timeSent": int(time.time(
-    ) * 1000), "locationAddress": {"resourceType": 'LocationAddress', "locationId": locationID}}
-    print('sending getunits request for ' + locationID)
-    sendMessagetoQue(request)
-
-
-def setUnitPropertyRequest(locationId, did, name):
-    request_data = {
-        "messageType": "SetUnitPropertyRequest",
-        "unitAddress": {
-            "resourceType": "UnitAddress",
-            "did": did,
-            "locationId": locationId
-        },
-        "unitProperty": {
-            "resourceType": "UnitProperty",
-            "name": "logicalName",
-            "value": name
-        }
-    }
-
-    sendMessage(request_data)
-
-
-def get_unit_property():
-    request = {
-        "messageType": "GetUnitPropertyRequest",
-        "timeSent": 1609746867000,
-        "unitAddress": {
-            "resourceType": "UnitAddress",
-            "timeCreated": 1609746867000,
-            "did": "UUID-F0E454CAC23D49768470DECD14069F7C",
-            "locationId": '251092'
-        },
-        "name": "dataSource"
-    }
-    sendMessage(request)
-
 
 def sendLoginRequest():
     if sessionId=='':
@@ -350,43 +257,6 @@ def sendLoginRequest():
                    "sessionId": sessionId,
                    "username": username, "password": password}
     sendMessagetoQue(request)
-
-
-def sendGetSamplesRequest(UnitDid, LocationId, start, end):
-    # print('    ---', start, end, '  ')
-    if (end - start) <= timedelta(days=splitDays):  # !!为了保证返回的记录数不大于2000,限制时段的天数
-        request = {
-            "messageType": "GetSamplesRequest",
-            "dataSourceAddress": {
-                "resourceType": "DataSourceAddress",
-                "did": UnitDid,
-                "locationId": LocationId
-            },
-            "timeSerieSelection": {
-                "resourceType": "TimeSerieSelection",
-                # "numberOfSamplesBeforeStart": 3,
-                "timeStart": int(start.timestamp())*1000,
-                # "timeStart" : int((time.time() - (60 * 3600)) * 1000), # 24 hours
-                "timeEnd": int(end.timestamp())*1000
-                # "timeEnd" : int((time.time() - (0 * 3600)) * 1000)
-            }
-        }
-        # print(request["timeSerieSelection"]['timeStart'])
-        global requestcount
-        requestcount += 1
-        print(requestcount, end='.')  # 增加请求计数器
-        # pprint(request)
-        sendMessagetoQue(request)
-    else:
-        # print('2')
-        # time_stamp = int(time.mktime(time.strptime(start, pattern) + 24 * 3600*1000))
-        # startday = datetime.fromtimestamp(time.mktime(time.strptime(start, pattern)))
-        start_time_plus_splitDays = start+timedelta(days=splitDays)
-        # start_time_plus_1D = start+datetime.timedelta(days=20)
-        sendGetSamplesRequest(UnitDid, LocationId, start,
-                              start_time_plus_splitDays)
-        sendGetSamplesRequest(UnitDid, LocationId,
-                              start_time_plus_splitDays, end)
 
 
 if __name__ == "__main__":
