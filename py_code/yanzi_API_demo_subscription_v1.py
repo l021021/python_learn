@@ -16,13 +16,37 @@ import json
 import ssl
 import sys
 import time
+import websocket
 from collections import deque
 from datetime import datetime
 from pprint import pprint
+from threading import Timer
+class RepeatedTimer(object):
+    def __init__(self, interval, function, *args, **kwargs):
+        self._timer = None
+        self.interval = interval
+        self.function = function
+        self.args = args
+        self.kwargs = kwargs
+        self.is_running = False
+        self.start()
 
-import websocket
+    def _run(self):
+        self.is_running = False
+        self.start()
+        self.function(*self.args, **self.kwargs)
 
-from RT import RepeatedTimer
+    def start(self):
+        if not self.is_running:
+            self._timer = Timer(self.interval, self._run)
+            self._timer.start()
+            self.is_running = True
+
+    def stop(self):
+        self._timer.cancel()
+        self.is_running = False
+
+
 
 # The cirrus host to connect to:
 cirrusHost = "cirrus.ifangtang.net"
@@ -79,18 +103,19 @@ def onMessage(ws, message):
             # sendGetUnitsRequest(locationID)
             # sendSubscribeRequest(locationID,['lifecycle']) #
             #!!订阅的数据选项
-            sendSubscribeRequest(locationID,[
+            sendSubscribeRequest(locationID,
+                [
                 'lifecycle',
-                                             'config',
-                                             'data',
-                                             'assetSlots',
-                                             'occupancy',
-                                             'battery',
-                                             'sensorData',
-                                             'sensorSlots',
-                                             'assetData',                                             
-                                             'occupancySlots'
-                                             ]) #
+                'config',
+                'data',
+                'assetSlots',
+                'occupancy',
+                'battery',
+                'sensorData',
+                'sensorSlots',
+                'assetData',                                             
+                'occupancySlots'
+                ]) #
             sendPeriodicRequest()
         else:
             print(response)
@@ -118,44 +143,32 @@ def onMessage(ws, message):
             
                 elif response['list'][0]['list'][0]['resourceType'] == 'SampleUpState':
                     print(response['list'][0]['list'][0]['deviceUpState']['name'])
-                # print(response['list'][0]['list'][0]['value'],'\n ')
-                # print(response['list'][0]['list'][0]['assetState']['name'])
-                # for 
                 else: 
                    print(response['list'][0]['list'][0]['value'])
             elif response['subscriptionType']['name'] == 'battery':
                 print(response['list'][0]['dataSourceAddress']['did'], end='-')
                 print(response['list'][0]['list'][0]['value'], end='-')
-            # print(response['list'][0]['list'][0]['value'],'\n ')
-            # print(response['list'][0]['list'][0]['assetState']['name'])
-            # for 
                 print((response['list'][0]['list'][0]['value'] if 'value' in response['list'][0]['list'][0] else \
                 response['list'][0]['list'][0]['assetState']['name']))
-                
-      
             elif response['subscriptionType']['name'] =='occupancySlots':
                 print(response['list'][0]['dataSourceAddress']['did'], end='-')
                 print(response['list'][0]['list'][0]['sample']['assetState']['name'], response['list'][0]['list'][0]['slotSize']['name'])
             elif response['subscriptionType']['name'] =='lifecycle':
-                print(response['list'][0]['eventType']['name'], end='-')
-                print(response['list'][0]['unitAddress']['did'])
+                print(response['list'][0]['unitAddress']['did'], end='-')
+                print(response['list'][0]['eventType']['name'])
                 # print(response['list'][0]['list'][0]['deviceUpState']['name'])
             elif response['subscriptionType']['name'] =='sensorSlots':
                 print(response['list'][0]['dataSourceAddress']['did'][12:], end='-')
                 print('Aggre:',response['list'][0]['list'][0]['aggregateValue'],'in ',response['list'][0]['list'][0]['numberOfValues'],
                 'periods of ',response['list'][0]['list'][0]['slotSize']['name'])
-            # elif response['subscriptionType']['name'] =='occupancy':
-                
-            #     print(response['list'][0]['dataSourceAddress']['did'])
             elif response['subscriptionType']['name'] == 'sensorData':
                 print(response['list'][0]['dataSourceAddress']['did'], end='-')
                 print(response['list'][0]['dataSourceAddress']['variableName']['name'], end='-')
-
                 print((response['list'][0]['list'][0]['value'] if 'value' in response['list'][0]['list'][0] else \
                     response['list'][0]['list'][0]['assetState']['name']))
             elif response['subscriptionType']['name'] =='assetSlots':
-                print(response['list'][0]['dataSourceAddress']['did'])
-                print(response['list'][0]['list'][0]['aggregateValue'])
+                print(response['list'][0]['dataSourceAddress']['did'], end='-')
+                print('aggregateValue',response['list'][0]['list'][0]['aggregateValue'])
             elif response['subscriptionType']['name'] =='occupancy':
                 print(response['list'][0]['dataSourceAddress']['did'], end='-')
                 if response['list'][0]['list'][0]['resourceType'] == 'SampleAsset':
@@ -163,8 +176,6 @@ def onMessage(ws, message):
                     print(response['list'][0]['list'][0]['assetState']['name'])
                 elif response['list'][0]['list'][0]['resourceType'] == 'SampleUtilization':
                     print('free', response['list'][0]['list'][0]['free'], 'occu:', response['list'][0]['list'][0]['occupied'])
-                # elif response['list'][0]['list'][0]['resourceType'] == 'SampleAsset':
-                #     print('free:',response['list'][0]['list'][0]['assetState']['free'])
 
             else:
 
@@ -245,8 +256,6 @@ def sendSubscribeRequest(location_id, datatype):
         sendMessage(request)
         # print('      ', request)
 
-
-    sendMessage(request_data)
 
 def sendLoginRequest():
     if sessionId=='':
