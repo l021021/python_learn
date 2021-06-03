@@ -44,7 +44,9 @@ password = 'iFangtang#899'
 # locationID = "573742"  # ft
 # locationID = "521209"  # wf
 # locationID = "274189" # sunon
-locationID = "797296" # 诺梵
+locationID = "797296"  # 诺梵
+locationID = "843653"  # 诺梵
+
 
 requestcount = 0
 HBFlag = 0
