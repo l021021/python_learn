@@ -47,9 +47,10 @@ class RepeatedTimer(object):
         self.is_running = False
 
 
-
 # The cirrus host to connect to:
-cirrusHost = "cirrus.ifangtang.net"
+# cirrusHost = "cirrus.ifangtang.net"
+cirrusHost = "42.159.214.39"
+# cirrusHost = "42.159.213.152"
 
 # Change the username and password to the Yanzi credentials:
 username = '653498331@qq.com'
@@ -193,7 +194,13 @@ def onMessage(ws, message):
           pass
 
 
+def onError(ws, error):
+    print(ws)
+    print(error)
+
 def onClose(ws):
+    print(ws)
+
     print("\n----Connection to Cloud closed----\n")
 
 
@@ -270,7 +277,8 @@ def sendLoginRequest():
 
 
 if __name__ == "__main__":
+    websocket.enableTrace(True)
     print(datetime.now(), "Connecting to ",          cirrusHost, locationID," with user ", username)
     ws = websocket.WebSocketApp("wss://" + cirrusHost + "/cirrusAPI",
-                                on_message=onMessage, on_close=onClose, on_open=onOpen, keep_running=True)
+                                on_message=onMessage, on_close=onClose, on_open=onOpen, keep_running=True,on_error=onError)
     ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
