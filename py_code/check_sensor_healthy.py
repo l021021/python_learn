@@ -59,17 +59,22 @@ password = 'iFangtang#899'
 # locationID = "879448"  # snf
 # locationID = "252208"
 # locationID = "74365"  # kerry
-locationID = "797296"  # nv
+# locationID = "797296"  # nv
+locationID = "674889"  # edw 001
+locationID = "157170"  # edw 002
+locationID = "702519"  # edw 003
+
+
 
 # locationID = "229349"  # ft
 # locationID = "521209"  # wf
 # locationID = "879448"  # snf
-# locationID = "368307"  # yuanjin1
-locationID = "834706"  # yuanjin2
-locationID = "234190"  # yuanjin3
-locationID = "251092"  # yuanjin4
-locationID = "725728"  # yuanjin5
-# locationID = "503370"  # wanke
+# # locationID = "368307"  # yuanjin1
+# locationID = "834706"  # yuanjin2
+# locationID = "234190"  # yuanjin3
+# locationID = "251092"  # yuanjin4
+# locationID = "725728"  # yuanjin5
+# # locationID = "503370"  # wanke
 timeToWait=180 #time to wait for motion records 
 
 
