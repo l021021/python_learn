@@ -25,10 +25,9 @@ from threading import Timer
 
 locationID = "573742"  # ft
 # locationID = "252208"
-# locationID = "74365"  # kerry
-
+locationID = "722830"  # 厦门
 # locationID = "229349"  # ft
-# locationID = "521209"  # wf
+#locationID = "521209"  # wf
 # locationID = "879448"  # snf
 # locationID = "368307"  # yuanjin1
 # locationID = "834706"  # yuanjin2

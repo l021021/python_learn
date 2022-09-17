@@ -37,7 +37,7 @@ password = 'iFangtang#899'
 # locationID = "74365"  # kerry
 # locationID = "229349"  # ft
 # locationID = "521209"  # wf
-locationID = "797296"  # nf
+locationID = "722830"  # nf
 
 # locationID = "368307"  # yuanjin1
 # locationID = "834706"  # yuanjin2
@@ -46,8 +46,8 @@ locationID = "797296"  # nf
 # locationID = "725728"  # yuanjin5
 # locationID = "503370"  # 万科
 
-startstr = '2021-01-01-00-00-00' #!!这些参数会被传入的参数替代
-endstr = '2021-03-31-23-59-59'
+startstr = '2022-09-01-00-00-00' #!!这些参数会被传入的参数替代
+endstr = '2022-09-02-23-59-59'
 datatype = 'UUID'  # Motion | UUID  #选择要采的数据类型
 
 """!! 采集何种数据和粒度:UUID和MOTION 相差可能有几十倍, 而不同的粒度,计算差异不大,但是对生成的数据差异较大
